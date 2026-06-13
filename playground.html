@@ -2090,9 +2090,14 @@
                 temperature: parseFloat(elTemperature.value),
                 top_p: parseFloat(elTopP.value),
                 max_tokens: parseInt(elMaxTokens.value),
-                max_completion_tokens: parseInt(elMaxTokens.value),
                 stream: true
             };
+
+            // Only add max_completion_tokens for OpenAI o1/o3 reasoning models
+            const modelLower = activeModel.toLowerCase();
+            if (modelLower.includes("o1") || modelLower.includes("o3")) {
+                payload.max_completion_tokens = parseInt(elMaxTokens.value);
+            }
 
             // Add thinking options
             if (isThinkingActive) {
@@ -2163,9 +2168,12 @@
                             temperature: parseFloat(elTemperature.value),
                             top_p: parseFloat(elTopP.value),
                             max_tokens: parseInt(elMaxTokens.value),
-                            max_completion_tokens: parseInt(elMaxTokens.value),
                             stream: true
                         };
+                        const modelLower = activeModel.toLowerCase();
+                        if (modelLower.includes("o1") || modelLower.includes("o3")) {
+                            fallbackPayload.max_completion_tokens = parseInt(elMaxTokens.value);
+                        }
                         if (elConnectionMode.value.startsWith("cloud")) {
                             fallbackPayload["stream_options"] = { "include_usage": true };
                         }
