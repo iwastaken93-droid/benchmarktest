@@ -54,7 +54,10 @@ def save_api_key(api_key):
 
 def is_chat_model(model_id):
     model_id_lower = model_id.lower()
-    exclude_keywords = ['embed', 'rerank', 'clip', 'similarity', 'image', 'stable-diffusion', 'whisper', 'sdxl', 'vision-language', 'neva', 'kosmos']
+    exclude_keywords = [
+        'embed', 'rerank', 'clip', 'similarity', 'image', 'stable-diffusion', 'whisper', 'sdxl', 
+        'vision-language', 'neva', 'kosmos', 'nemoguard', 'safety-guard', 'guard', 'safety', 'moderation'
+    ]
     for kw in exclude_keywords:
         if kw in model_id_lower:
             return False
@@ -174,6 +177,10 @@ def run_trial(model_id, api_key, prompt, max_tokens):
                 token_count = int(char_count / 4)
             if token_count == 0:
                 token_count = 1
+
+            # Reject safety / guardrail models that generate very short responses
+            if token_count < 100:
+                return {"success": False, "error": f"Generated too few tokens ({token_count} < 100)"}
                 
             latency_delta_s = (total_time - ttft) / 1000.0
             if latency_delta_s > 0 and token_count > 1:
@@ -283,16 +290,19 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                     avg_tps = 0.0
                     avg_tokens = 0.0
                     
-                model_summary = {
-                    "model": model_id,
-                    "avg_ttft_ms": avg_ttft,
-                    "avg_latency_ms": avg_latency,
-                    "avg_tps": avg_tps,
-                    "avg_tokens": avg_tokens,
-                    "success_rate": success_rate,
-                    "trials": trials
-                }
-                save_incremental_model_result(model_summary)
+                if success_rate > 0.0 and avg_tokens >= 100:
+                    model_summary = {
+                        "model": model_id,
+                        "avg_ttft_ms": avg_ttft,
+                        "avg_latency_ms": avg_latency,
+                        "avg_tps": avg_tps,
+                        "avg_tokens": avg_tokens,
+                        "success_rate": success_rate,
+                        "trials": trials
+                    }
+                    save_incremental_model_result(model_summary)
+                else:
+                    print(f"[Benchmark] Skipping saving results for {model_id} (success_rate={success_rate}, avg_tokens={avg_tokens:.1f})")
                 
             completed_tasks_count += 1
             print(f"[Benchmark] Trial {task_idx+1}/{total_tasks} complete ({model_id} trial {trial_idx+1}/3). Total completed: {completed_tasks_count}/{total_tasks}")
