@@ -30,4 +30,5 @@ jobs:
           git config --local user.name "GitHub Action"
           git add benchmark_results.json
           git commit -m "Update benchmark metrics [skip ci]" || exit 0
-          git push
+          git pull --rebase origin master
+          git push origin master
