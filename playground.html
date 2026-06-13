@@ -1375,11 +1375,31 @@
         let isFetchingModels = false;
         let isStreamingResponse = false;
 
+        // Set of verified non-reasoning models to dynamically adapt to API rejections
+        let verifiedNonReasoningModels = new Set(JSON.parse(localStorage.getItem("nim_non_reasoning_models") || "[]"));
+
+        function markModelAsNonReasoning(modelId) {
+            if (!modelId) return;
+            verifiedNonReasoningModels.add(modelId);
+            localStorage.setItem("nim_non_reasoning_models", JSON.stringify([...verifiedNonReasoningModels]));
+            log(`Marked model ${modelId} as non-reasoning due to payload rejection.`, "WARN");
+            
+            // Dynamic UI adjustment if this model is currently selected
+            if (elModelSelect.value === modelId) {
+                elReasoningPanel.style.display = "none";
+                elEnableThinking.checked = false;
+                elThinkingSettingsContainer.style.display = "none";
+            }
+        }
+
         // Helper to check if model supports reasoning/thinking
         function isReasoningModel(modelId) {
             if (!modelId) return false;
+            if (verifiedNonReasoningModels.has(modelId)) return false;
             const id = modelId.toLowerCase();
-            return id.includes("r1") || id.includes("o1") || id.includes("o3") || id.includes("nemotron") || id.includes("reasoning") || id.includes("thinking");
+            // Focus strictly on models containing reasoning, thinking, or OpenAI o1/o3.
+            // Excluding 'nemotron' to avoid false positives on standard instruction models.
+            return id.includes("reason2") || id.includes("reasoning") || id.includes("thinking") || id.includes("o1") || id.includes("o3");
         }
 
         // Marked rendering options
@@ -2121,8 +2141,11 @@
                 payload["stream_options"] = { "include_usage": true };
             }
 
+            let response;
+            let tryWithThinkingOrReasoning = isReasoning;
+
             try {
-                const response = await fetch(targetUrl, {
+                response = await fetch(targetUrl, {
                     method: "POST",
                     headers: buildHeaders(),
                     body: JSON.stringify(payload),
@@ -2131,7 +2154,46 @@
 
                 if (!response.ok) {
                     const errText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errText || response.statusText}`);
+                    const status = response.status;
+                    
+                    // If we tried with thinking/reasoning options and got 422 / 400, retry without them!
+                    if (tryWithThinkingOrReasoning && (status === 422 || status === 400 || errText.toLowerCase().includes("thinking") || errText.toLowerCase().includes("extra fields") || errText.toLowerCase().includes("unprocessable") || errText.toLowerCase().includes("extra_fields"))) {
+                        log(`Model ${activeModel} rejected reasoning parameters (HTTP ${status}). Retrying without reasoning params...`, "WARN");
+                        
+                        // Register in unsupported set
+                        markModelAsNonReasoning(activeModel);
+                        
+                        // Rebuild payload without thinking
+                        const fallbackPayload = {
+                            model: activeModel,
+                            messages: [
+                                { role: "system", content: elSystemPrompt.value },
+                                ...conversationHistory
+                            ],
+                            temperature: parseFloat(elTemperature.value),
+                            top_p: parseFloat(elTopP.value),
+                            max_tokens: parseInt(elMaxTokens.value),
+                            max_completion_tokens: parseInt(elMaxTokens.value),
+                            stream: true
+                        };
+                        if (elConnectionMode.value.startsWith("cloud")) {
+                            fallbackPayload["stream_options"] = { "include_usage": true };
+                        }
+                        
+                        response = await fetch(targetUrl, {
+                            method: "POST",
+                            headers: buildHeaders(),
+                            body: JSON.stringify(fallbackPayload),
+                            signal: activeStreamAbortController.signal
+                        });
+                        
+                        if (!response.ok) {
+                            const secondErrText = await response.text();
+                            throw new Error(`HTTP ${response.status}: ${secondErrText || response.statusText}`);
+                        }
+                    } else {
+                        throw new Error(`HTTP ${status}: ${errText || response.statusText}`);
+                    }
                 }
 
                 const reader = response.body.getReader();
