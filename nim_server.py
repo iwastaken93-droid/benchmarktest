@@ -147,6 +147,9 @@ def run_trial(model_id, api_key, prompt, max_tokens):
                         break
                     try:
                         data_json = json.loads(data_str)
+                        if "error" in data_json:
+                            err_msg = data_json["error"].get("message", "Mid-stream API error")
+                            return {"success": False, "error": f"API Error: {err_msg}"}
                         choices = data_json.get("choices", [])
                         if choices:
                             delta = choices[0].get("delta", {})
@@ -158,6 +161,10 @@ def run_trial(model_id, api_key, prompt, max_tokens):
             
             total_time = (time.time() - start_time) * 1000.0
             
+            # Check if we generated any text. If not, treat as failure.
+            if not generated_text.strip():
+                return {"success": False, "error": "Empty response or stream error"}
+                
             # Estimate token count based on generated text
             word_count = len(generated_text.split())
             char_count = len(generated_text)

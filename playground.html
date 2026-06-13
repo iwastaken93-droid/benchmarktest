@@ -1156,7 +1156,7 @@
                             Thinking Mode
                         </label>
                         <select id="thinking-mode">
-                            <option value="auto" selected>Auto (Based on Model)</option>
+                            <option value="default" selected>Default (Do Nothing / Omit)</option>
                             <option value="on">Forced ON</option>
                             <option value="off">Forced OFF</option>
                         </select>
@@ -1379,10 +1379,7 @@
 
         function getThinkingState() {
             const mode = elThinkingMode.value;
-            if (mode === "on") return true;
-            if (mode === "off") return false;
-            // 'auto' mode resolves based on model name detection
-            return isReasoningModel(elModelSelect.value);
+            return mode === "on";
         }
 
         function updateThinkingSettingsVisibility() {
@@ -1513,8 +1510,11 @@
                 elMaxTokens.value = savedMaxTokens;
             }
 
-            const savedThinkingMode = localStorage.getItem("nim_thinking_mode");
-            elThinkingMode.value = savedThinkingMode === null ? "auto" : savedThinkingMode;
+            let savedThinkingMode = localStorage.getItem("nim_thinking_mode");
+            if (savedThinkingMode === null || savedThinkingMode === "auto") {
+                savedThinkingMode = "default";
+            }
+            elThinkingMode.value = savedThinkingMode;
             updateThinkingSettingsVisibility();
 
             const savedThinkingBudget = localStorage.getItem("nim_thinking_budget");
@@ -2119,6 +2119,11 @@
                     thinking_budget: budget
                 };
                 payload.reasoning_effort = elReasoningEffort.value;
+            } else if (elThinkingMode.value === "off" && isReasoning) {
+                // For verified/detected reasoning models, explicitly disable thinking in the payload
+                payload.thinking = {
+                    type: "disabled"
+                };
             }
 
             // Request usage statistics in stream chunks for cloud models
@@ -2127,7 +2132,7 @@
             }
 
             let response;
-            let tryWithThinkingOrReasoning = isThinkingActive;
+            let tryWithThinkingOrReasoning = isThinkingActive || (elThinkingMode.value === "off" && isReasoning);
 
             try {
                 response = await fetch(targetUrl, {
