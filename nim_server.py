@@ -127,7 +127,7 @@ def run_trial(model_id, api_key, prompt, max_tokens):
     start_time = time.time()
     ttft = 0.0
     total_time = 0.0
-    token_count = 0
+    generated_text = ""
     
     try:
         with urllib.request.urlopen(req, timeout=45) as response:
@@ -150,12 +150,21 @@ def run_trial(model_id, api_key, prompt, max_tokens):
                         choices = data_json.get("choices", [])
                         if choices:
                             delta = choices[0].get("delta", {})
-                            if "content" in delta or "reasoning" in delta or "reasoning_content" in delta:
-                                token_count += 1
+                            content = delta.get("content", "")
+                            reasoning = delta.get("reasoning", "") or delta.get("reasoning_content", "")
+                            generated_text += content + reasoning
                     except Exception:
                         pass
             
             total_time = (time.time() - start_time) * 1000.0
+            
+            # Estimate token count based on generated text
+            word_count = len(generated_text.split())
+            char_count = len(generated_text)
+            if word_count > 0:
+                token_count = int(word_count * 1.33)
+            else:
+                token_count = int(char_count / 4)
             if token_count == 0:
                 token_count = 1
                 
