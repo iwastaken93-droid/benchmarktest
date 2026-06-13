@@ -1149,21 +1149,20 @@
                 </div>
 
                 <!-- Reasoning & Thinking settings panel -->
-                <div id="reasoning-panel" style="display: none; flex-direction: column;">
+                <div id="reasoning-panel" style="display: flex; flex-direction: column;">
                     <div class="form-group" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <span style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                                <i data-lucide="brain" style="width: 15px; height: 15px; color: var(--nvidia-green);"></i>
-                                Enable Thinking
-                            </span>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="enable-thinking">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
+                        <label for="thinking-mode" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="brain" style="width: 15px; height: 15px; color: var(--nvidia-green);"></i>
+                            Thinking Mode
+                        </label>
+                        <select id="thinking-mode">
+                            <option value="auto" selected>Auto (Based on Model)</option>
+                            <option value="on">Forced ON</option>
+                            <option value="off">Forced OFF</option>
+                        </select>
                     </div>
 
-                    <div id="thinking-settings-container" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                    <div id="thinking-settings-container" style="display: none; flex-direction: column; gap: 12px; margin-top: 4px;">
                         <div class="form-group">
                             <label for="thinking-budget">Thinking Budget (Tokens)</label>
                             <input type="number" id="thinking-budget" min="1" max="16384" value="2048">
@@ -1334,7 +1333,7 @@
         const elTopP = document.getElementById("top-p");
         const elTopPVal = document.getElementById("top-p-val");
         const elMaxTokens = document.getElementById("max-tokens");
-        const elEnableThinking = document.getElementById("enable-thinking");
+        const elThinkingMode = document.getElementById("thinking-mode");
         const elThinkingSettingsContainer = document.getElementById("thinking-settings-container");
         const elThinkingBudget = document.getElementById("thinking-budget");
         const elReasoningEffort = document.getElementById("reasoning-effort");
@@ -1378,6 +1377,19 @@
         // Set of verified non-reasoning models to dynamically adapt to API rejections
         let verifiedNonReasoningModels = new Set(JSON.parse(localStorage.getItem("nim_non_reasoning_models") || "[]"));
 
+        function getThinkingState() {
+            const mode = elThinkingMode.value;
+            if (mode === "on") return true;
+            if (mode === "off") return false;
+            // 'auto' mode resolves based on model name detection
+            return isReasoningModel(elModelSelect.value);
+        }
+
+        function updateThinkingSettingsVisibility() {
+            const isThinking = getThinkingState();
+            elThinkingSettingsContainer.style.display = isThinking ? "flex" : "none";
+        }
+
         function markModelAsNonReasoning(modelId) {
             if (!modelId) return;
             verifiedNonReasoningModels.add(modelId);
@@ -1386,9 +1398,11 @@
             
             // Dynamic UI adjustment if this model is currently selected
             if (elModelSelect.value === modelId) {
-                elReasoningPanel.style.display = "none";
-                elEnableThinking.checked = false;
-                elThinkingSettingsContainer.style.display = "none";
+                if (elThinkingMode.value === "on") {
+                    elThinkingMode.value = "off";
+                }
+                updateThinkingSettingsVisibility();
+                saveConfigToLocalStorage();
             }
         }
 
@@ -1499,9 +1513,9 @@
                 elMaxTokens.value = savedMaxTokens;
             }
 
-            const savedEnableThinking = localStorage.getItem("nim_enable_thinking");
-            elEnableThinking.checked = savedEnableThinking === null ? false : savedEnableThinking === "true";
-            elThinkingSettingsContainer.style.display = elEnableThinking.checked ? "flex" : "none";
+            const savedThinkingMode = localStorage.getItem("nim_thinking_mode");
+            elThinkingMode.value = savedThinkingMode === null ? "auto" : savedThinkingMode;
+            updateThinkingSettingsVisibility();
 
             const savedThinkingBudget = localStorage.getItem("nim_thinking_budget");
             if (savedThinkingBudget !== null) {
@@ -1526,9 +1540,7 @@
             localStorage.setItem("nim_temperature", elTemperature.value);
             localStorage.setItem("nim_top_p", elTopP.value);
             localStorage.setItem("nim_max_tokens", elMaxTokens.value);
-            if (isReasoningModel(elModelSelect.value)) {
-                localStorage.setItem("nim_enable_thinking", elEnableThinking.checked);
-            }
+            localStorage.setItem("nim_thinking_mode", elThinkingMode.value);
             localStorage.setItem("nim_thinking_budget", elThinkingBudget.value);
             localStorage.setItem("nim_reasoning_effort", elReasoningEffort.value);
         }
@@ -1577,8 +1589,8 @@
             elSystemPrompt.addEventListener("input", () => saveConfigToLocalStorage());
 
             // Thinking settings listeners
-            elEnableThinking.addEventListener("change", (e) => {
-                elThinkingSettingsContainer.style.display = e.target.checked ? "flex" : "none";
+            elThinkingMode.addEventListener("change", () => {
+                updateThinkingSettingsVisibility();
                 saveConfigToLocalStorage();
             });
             elThinkingBudget.addEventListener("change", () => saveConfigToLocalStorage());
@@ -1655,25 +1667,14 @@
                     elBtnSend.disabled = false;
                     log(`Active model changed to: ${selected}`);
 
-                    const isReasoning = isReasoningModel(selected);
-                    if (isReasoning) {
-                        elReasoningPanel.style.display = "flex";
-                        const savedEnableThinking = localStorage.getItem("nim_enable_thinking");
-                        elEnableThinking.checked = savedEnableThinking === null ? true : savedEnableThinking === "true";
-                    } else {
-                        elReasoningPanel.style.display = "none";
-                        elEnableThinking.checked = false;
-                    }
-                    elThinkingSettingsContainer.style.display = elEnableThinking.checked ? "flex" : "none";
+                    updateThinkingSettingsVisibility();
                 } else {
                     elHeaderModelName.textContent = "Disconnected";
                     elHeaderStatusText.textContent = "Configure endpoint and discover models to begin";
                     elHeaderStatusDot.className = "status-dot";
                     elChatInput.disabled = true;
                     elBtnSend.disabled = true;
-                    elReasoningPanel.style.display = "none";
-                    elEnableThinking.checked = false;
-                    elThinkingSettingsContainer.style.display = "none";
+                    updateThinkingSettingsVisibility();
                 }
             });
         }
@@ -2074,7 +2075,8 @@
 
             // Build system prompt content
             let systemContent = elSystemPrompt.value;
-            if (elEnableThinking.checked && isReasoning) {
+            const isThinkingActive = getThinkingState();
+            if (isThinkingActive) {
                 systemContent = "detailed thinking on\n\n" + systemContent;
             }
 
@@ -2093,7 +2095,7 @@
             };
 
             // Add thinking options
-            if (elEnableThinking.checked && isReasoning) {
+            if (isThinkingActive) {
                 const budget = parseInt(elThinkingBudget.value);
                 
                 payload.do_sample = true; // Set top-level sampling parameter
@@ -2125,7 +2127,7 @@
             }
 
             let response;
-            let tryWithThinkingOrReasoning = isReasoning;
+            let tryWithThinkingOrReasoning = isThinkingActive;
 
             try {
                 response = await fetch(targetUrl, {
