@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NVIDIA NIM Performance Benchmarks</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    :root {
+      --bg-primary: #080c14;
+      --bg-secondary: #111726;
+      --bg-glass: rgba(17, 23, 38, 0.65);
+      --bg-glass-hover: rgba(25, 33, 54, 0.8);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-glow: rgba(118, 185, 0, 0.3);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-green: #76b900;
+      --accent-green-glow: rgba(118, 185, 0, 0.2);
+      --success-green: #10b981;
+      --warning-yellow: #f59e0b;
+      --danger-red: #ef4444;
+      --info-blue: #3b82f6;
+      --transition-fast: 0.2s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 15px 30px;
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-logo .logo-icon {
+      color: var(--accent-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-green-glow);
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--accent-green);
+    }
+
+    .brand-logo h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-logo span {
+      color: var(--accent-green);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-color: var(--text-secondary);
+    }
+
+    .btn-primary {
+      background-color: var(--accent-green);
+      border-color: var(--accent-green);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #8cde00;
+      border-color: #8cde00;
+      box-shadow: 0 0 15px rgba(118, 185, 0, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .runner-status-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--success-green);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.6s infinite;
+      display: inline-block;
+    }
+
+    .idle-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+      display: inline-block;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 30px auto 0 auto;
+      padding: 0 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* Cards Grid */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+      transition: border-color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .card:hover {
+      border-color: var(--border-color-glow);
+      transform: translateY(-2px);
+    }
+
+    .card-glow-green::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--accent-green);
+    }
+
+    .card-header-small {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .card-subtext {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-subtext.highlight {
+      color: var(--accent-green);
+    }
+
+    /* Double Column Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+
+    .col-left {
+      grid-column: span 5;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .col-right {
+      grid-column: span 7;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .col-left, .col-right {
+        grid-column: span 12;
+      }
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title i {
+      color: var(--accent-green);
+    }
+
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 320px;
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .model-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      display: block;
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: var(--success-green);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-warning {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: var(--warning-yellow);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-danger {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: var(--danger-red);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Logs Area */
+    .console-logs {
+      background: #05080e;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.8rem;
+      color: #34d399;
+      height: 180px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    .console-logs div {
+      margin-bottom: 4px;
+    }
+
+    .console-logs .log-time {
+      color: #6b7280;
+      margin-right: 8px;
+    }
+
+    .console-logs .log-error {
+      color: var(--danger-red);
+    }
+
+    .console-logs .log-info {
+      color: var(--info-blue);
+    }
+
+    /* Configuration Panel */
+    .config-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"], input[type="password"] {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: all var(--transition-fast);
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus {
+      outline: none;
+      border-color: var(--accent-green);
+      box-shadow: 0 0 10px rgba(118, 185, 0, 0.15);
+    }
+
+    .text-green {
+      color: var(--accent-green);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      display: block;
+      color: var(--text-muted);
+    }
+
+    /* Tab Layout inside cards */
+    .tabs-header {
+      display: flex;
+      gap: 20px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 15px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      padding: 10px 0;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      position: relative;
+      transition: color var(--transition-fast);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background-color: var(--accent-green);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <a href="/" class="brand-logo">
+        <div class="logo-icon">
+          <i data-lucide="zap"></i>
+        </div>
+        <div>
+          <h1>NVIDIA <span>NIM</span></h1>
+        </div>
+      </a>
+      
+      <div class="header-actions">
+        <a href="/" class="btn">
+          <i data-lucide="arrow-left"></i>
+          Playground Chat
+        </a>
+        
+        <div class="runner-status-wrapper">
+          <span id="runner-status"><span class="idle-dot"></span> Checking Status...</span>
+        </div>
+        
+        <button id="trigger-btn" class="btn btn-primary" onclick="triggerBenchmark()">
+          <i data-lucide="play"></i>
+          Trigger Benchmark
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Summary Statistics Grid -->
+    <div class="summary-grid">
+      <div class="card card-glow-green">
+        <div class="card-header-small">
+          <span>Overall Reliability</span>
+          <i data-lucide="shield-check" class="text-green"></i>
+        </div>
+        <div id="stat-reliability" class="card-value">-</div>
+        <div class="card-subtext">Average success rate of all tested models</div>
+      </div>
+      
+      <div class="card card-glow-green">
+        <div class="card-header-small">
+          <span>Fastest Model</span>
+          <i data-lucide="gauge" class="text-green"></i>
+        </div>
+        <div id="stat-fastest-model" class="card-value" style="font-size: 1.15rem; height: 2.4rem; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Inter', sans-serif; font-weight: 600;">-</div>
+        <div id="stat-fastest-value" class="card-subtext highlight">No data available</div>
+      </div>
+      
+      <div class="card card-glow-green">
+        <div class="card-header-small">
+          <span>Lowest Latency (TTFT)</span>
+          <i data-lucide="timer" class="text-green"></i>
+        </div>
+        <div id="stat-ttft-model" class="card-value" style="font-size: 1.15rem; height: 2.4rem; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Inter', sans-serif; font-weight: 600;">-</div>
+        <div id="stat-ttft-value" class="card-subtext highlight">No data available</div>
+      </div>
+
+      <div class="card card-glow-green">
+        <div class="card-header-small">
+          <span>Last Benchmark Run</span>
+          <i data-lucide="clock" class="text-green"></i>
+        </div>
+        <div id="stat-last-run" class="card-value" style="font-size: 1.35rem; height: 2.4rem; display: flex; align-items: center; font-family: 'Inter', sans-serif;">-</div>
+        <div class="card-subtext">Runs automatically every hour</div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="dashboard-layout">
+      <!-- Left Column: Visualizations & Config -->
+      <div class="col-left">
+        <!-- Visualization Panel -->
+        <div class="card">
+          <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab(event, 'tab-speed')">Throughput (TPS)</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-ttft')">TTFT & Latency</button>
+            <button class="tab-btn" onclick="switchTab(event, 'tab-reliability')">Reliability</button>
+          </div>
+          
+          <div id="tab-speed" class="tab-content active">
+            <div class="chart-container">
+              <canvas id="speedChart"></canvas>
+            </div>
+          </div>
+          
+          <div id="tab-ttft" class="tab-content">
+            <div class="chart-container">
+              <canvas id="ttftChart"></canvas>
+            </div>
+          </div>
+
+          <div id="tab-reliability" class="tab-content">
+            <div class="chart-container">
+              <canvas id="reliabilityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div class="card">
+          <h2 class="section-title">
+            <i data-lucide="sliders"></i>
+            Benchmark Configuration
+          </h2>
+          <div class="config-panel">
+            <div class="form-group">
+              <label for="api-key-input">NVIDIA API Key (nvapi-...)</label>
+              <div class="input-wrapper">
+                <input type="password" id="api-key-input" placeholder="Enter API Key to overwrite...">
+                <button class="btn btn-primary" onclick="saveConfig()">Save</button>
+              </div>
+              <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">
+                Note: This API Key will be persisted securely inside <code>config.json</code> on the server.
+              </small>
+            </div>
+            
+            <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+              <span style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 6px;">Workload Details:</span>
+              <ul style="font-size: 0.8rem; color: var(--text-muted); padding-left: 20px; line-height: 1.6;">
+                <li><strong>Prompt:</strong> "Write a 1000-word story about a speed unicorn..."</li>
+                <li><strong>Max Tokens:</strong> 10,000 tokens</li>
+                <li><strong>Rate Limit:</strong> 20 req/min (3.0s delay between trials)</li>
+                <li><strong>Trials:</strong> 3 sequential runs per active text model</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Comparative Metrics Table -->
+      <div class="col-right">
+        <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+          <h2 class="section-title">
+            <i data-lucide="bar-chart-3"></i>
+            Model Performance Comparison
+          </h2>
+          
+          <div class="table-container" style="flex: 1;">
+            <table id="comparison-table">
+              <thead>
+                <tr>
+                  <th>Model ID</th>
+                  <th>Avg Speed (TPS)</th>
+                  <th>Avg TTFT (ms)</th>
+                  <th>Total Latency (s)</th>
+                  <th>Reliability</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <tr>
+                  <td colspan="5" class="empty-state">
+                    <i data-lucide="loader-2" class="pulse-dot" style="animation: spin 1.5s linear infinite; margin: 0 auto; width: 24px; height: 24px; display: block;"></i>
+                    Loading benchmark metrics...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- System Logs Console -->
+        <div class="card">
+          <h2 class="section-title" style="margin-bottom: 12px;">
+            <i data-lucide="terminal"></i>
+            Background Runner Logs
+          </h2>
+          <div id="logs" class="console-logs">
+            <div><span class="log-time">[System Init]</span> Benchmark console ready. Waiting for metrics...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Chart variables
+    let speedChart = null;
+    let ttftChart = null;
+    let reliabilityChart = null;
+
+    // Load initial data on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      loadResults();
+      checkStatus();
+      setInterval(checkStatus, 4000);
+    });
+
+    function addLog(message, type = 'info') {
+      const logsContainer = document.getElementById('logs');
+      const logDiv = document.createElement('div');
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'log-time';
+      timeSpan.innerText = `[${new Date().toLocaleTimeString()}]`;
+      
+      logDiv.appendChild(timeSpan);
+      
+      const textSpan = document.createElement('span');
+      if (type === 'error') textSpan.className = 'log-error';
+      else if (type === 'info') textSpan.className = 'log-info';
+      textSpan.innerText = message;
+      
+      logDiv.appendChild(textSpan);
+      logsContainer.appendChild(logDiv);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    async function loadResults() {
+      try {
+        const res = await fetch('/v1/benchmark/results');
+        const history = await res.json();
+        
+        if (!history || history.length === 0) {
+          showEmptyState();
+          return;
+        }
+        
+        // Take the latest run
+        const latestRun = history[history.length - 1];
+        populateStats(latestRun);
+        populateTable(latestRun.results);
+        renderCharts(latestRun.results);
+        addLog(`Successfully loaded benchmark run from ${new Date(latestRun.timestamp).toLocaleString()}.`);
+      } catch (e) {
+        addLog('Failed to fetch benchmark history: ' + e.message, 'error');
+        showEmptyState();
+      }
+    }
+
+    function populateStats(run) {
+      const results = run.results;
+      
+      // 1. Last Run
+      const date = new Date(run.timestamp);
+      document.getElementById('stat-last-run').innerText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('stat-last-run').title = date.toLocaleString();
+      
+      if (!results || results.length === 0) return;
+      
+      // 2. Reliability
+      const successRates = results.map(r => r.success_rate);
+      const avgReliability = (successRates.reduce((a, b) => a + b, 0) / results.length) * 100;
+      document.getElementById('stat-reliability').innerHTML = `${avgReliability.toFixed(0)}<span style="font-size: 1.2rem; font-weight:500; color: var(--text-secondary);">%</span>`;
+      
+      // 3. Fastest Model
+      const successfulModels = results.filter(r => r.avg_tps > 0);
+      if (successfulModels.length > 0) {
+        const fastest = successfulModels.reduce((max, r) => r.avg_tps > max.avg_tps ? r : max, successfulModels[0]);
+        // Clean display name
+        const displayModel = fastest.model.split('/').pop();
+        document.getElementById('stat-fastest-model').innerText = displayModel;
+        document.getElementById('stat-fastest-model').title = fastest.model;
+        document.getElementById('stat-fastest-value').innerText = `${fastest.avg_tps.toFixed(1)} tokens/sec`;
+      } else {
+        document.getElementById('stat-fastest-model').innerText = "N/A";
+        document.getElementById('stat-fastest-value').innerText = "All models offline";
+      }
+      
+      // 4. Lowest TTFT
+      const modelsWithTTFT = results.filter(r => r.avg_ttft_ms > 0);
+      if (modelsWithTTFT.length > 0) {
+        const lowestTTFT = modelsWithTTFT.reduce((min, r) => r.avg_ttft_ms < min.avg_ttft_ms ? r : min, modelsWithTTFT[0]);
+        const displayModel = lowestTTFT.model.split('/').pop();
+        document.getElementById('stat-ttft-model').innerText = displayModel;
+        document.getElementById('stat-ttft-model').title = lowestTTFT.model;
+        document.getElementById('stat-ttft-value').innerText = `${lowestTTFT.avg_ttft_ms.toFixed(0)} ms latency`;
+      } else {
+        document.getElementById('stat-ttft-model').innerText = "N/A";
+        document.getElementById('stat-ttft-value').innerText = "All models offline";
+      }
+    }
+
+    function populateTable(results) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      
+      // Sort models by speed (TPS) descending
+      const sortedResults = [...results].sort((a, b) => b.avg_tps - a.avg_tps);
+      
+      sortedResults.forEach(r => {
+        const tr = document.createElement('tr');
+        
+        // Model cell
+        const tdModel = document.createElement('td');
+        tdModel.innerHTML = `<span class="model-name" title="${r.model}">${r.model}</span>`;
+        tr.appendChild(tdModel);
+        
+        // Speed (TPS) cell
+        const tdSpeed = document.createElement('td');
+        tdSpeed.innerHTML = r.avg_tps > 0 
+          ? `<strong style="color: var(--accent-green); font-size: 1rem;">${r.avg_tps.toFixed(1)}</strong> <span style="font-size:0.75rem; color: var(--text-secondary);">tok/s</span>`
+          : `<span style="color: var(--text-muted);">N/A</span>`;
+        tr.appendChild(tdSpeed);
+        
+        // TTFT cell
+        const tdTTFT = document.createElement('td');
+        tdTTFT.innerText = r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'N/A';
+        tr.appendChild(tdTTFT);
+        
+        // Latency cell
+        const tdLatency = document.createElement('td');
+        tdLatency.innerText = r.avg_latency_ms > 0 ? `${(r.avg_latency_ms / 1000.0).toFixed(2)} s` : 'N/A';
+        tr.appendChild(tdLatency);
+        
+        // Reliability cell
+        const tdReliability = document.createElement('td');
+        const percentage = r.success_rate * 100;
+        let badgeClass = 'badge-success';
+        if (percentage < 100 && percentage > 0) badgeClass = 'badge-warning';
+        else if (percentage === 0) badgeClass = 'badge-danger';
+        
+        tdReliability.innerHTML = `<span class="badge ${badgeClass}">${percentage.toFixed(0)}%</span>`;
+        tr.appendChild(tdReliability);
+        
+        tbody.appendChild(tr);
+      });
+      
+      lucide.createIcons();
+    }
+
+    function renderCharts(results) {
+      const sortedResults = [...results].sort((a, b) => b.avg_tps - a.avg_tps);
+      const labels = sortedResults.map(r => r.model.split('/').pop());
+      const tpsData = sortedResults.map(r => r.avg_tps > 0 ? r.avg_tps : 0);
+      const ttftData = sortedResults.map(r => r.avg_ttft_ms > 0 ? r.avg_ttft_ms : 0);
+      const reliabilityData = sortedResults.map(r => r.success_rate * 100);
+
+      // 1. Throughput Chart
+      if (speedChart) speedChart.destroy();
+      const ctxSpeed = document.getElementById('speedChart').getContext('2d');
+      speedChart = new Chart(ctxSpeed, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Averages Speed (TPS)',
+            data: tpsData,
+            backgroundColor: 'rgba(118, 185, 0, 0.65)',
+            borderColor: '#76b900',
+            borderWidth: 1.5,
+            borderRadius: 6,
+            hoverBackgroundColor: 'rgba(118, 185, 0, 0.85)',
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#111726',
+              titleColor: '#fff',
+              bodyColor: '#f3f4f6',
+              borderColor: 'rgba(118, 185, 0, 0.3)',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af' },
+              title: { display: true, text: 'Tokens / Second', color: '#9ca3af' }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { color: '#f3f4f6', font: { weight: '600' } }
+            }
+          }
+        }
+      });
+
+      // 2. TTFT & Latency Chart
+      if (ttftChart) ttftChart.destroy();
+      const ctxTTFT = document.getElementById('ttftChart').getContext('2d');
+      ttftChart = new Chart(ctxTTFT, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'TTFT (ms)',
+              data: ttftData,
+              backgroundColor: 'rgba(59, 130, 246, 0.65)',
+              borderColor: '#3b82f6',
+              borderWidth: 1.5,
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, labels: { color: '#9ca3af' } },
+            tooltip: { backgroundColor: '#111726' }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#9ca3af' }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af' },
+              title: { display: true, text: 'Time (ms)', color: '#9ca3af' }
+            }
+          }
+        }
+      });
+
+      // 3. Reliability Chart
+      if (reliabilityChart) reliabilityChart.destroy();
+      const ctxReliability = document.getElementById('reliabilityChart').getContext('2d');
+      reliabilityChart = new Chart(ctxReliability, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Success Rate (%)',
+            data: reliabilityData,
+            backgroundColor: reliabilityData.map(val => 
+              val === 100 ? 'rgba(16, 185, 129, 0.6)' : (val > 0 ? 'rgba(245, 158, 11, 0.6)' : 'rgba(239, 68, 68, 0.6)')
+            ),
+            borderColor: reliabilityData.map(val => 
+              val === 100 ? '#10b981' : (val > 0 ? '#f59e0b' : '#ef4444')
+            ),
+            borderWidth: 1.5,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#111726' }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#9ca3af' }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af', callback: value => value + '%' }
+            }
+          }
+        }
+      });
+    }
+
+    function showEmptyState() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state">
+            <i data-lucide="alert-circle"></i>
+            No benchmark data available. Click "Trigger Benchmark" to run the first evaluation.
+          </td>
+        </tr>
+      `;
+      document.getElementById('stat-reliability').innerText = '-';
+      document.getElementById('stat-fastest-model').innerText = '-';
+      document.getElementById('stat-fastest-value').innerText = 'No data available';
+      document.getElementById('stat-ttft-model').innerText = '-';
+      document.getElementById('stat-ttft-value').innerText = 'No data available';
+      document.getElementById('stat-last-run').innerText = '-';
+      
+      lucide.createIcons();
+    }
+
+    let statusPollingCount = 0;
+    async function checkStatus() {
+      try {
+        const res = await fetch('/v1/benchmark/status');
+        const data = await res.json();
+        
+        const statusText = document.getElementById('runner-status');
+        const triggerBtn = document.getElementById('trigger-btn');
+        
+        if (data.running) {
+          statusText.innerHTML = `<span class="pulse-dot"></span> ${data.status}`;
+          triggerBtn.disabled = true;
+          triggerBtn.innerHTML = `<i data-lucide="loader-2" style="animation: spin 1.5s linear infinite; display: inline-block; width: 14px; height: 14px; margin-right: 4px;"></i> Running...`;
+          
+          if (statusPollingCount % 5 === 0) {
+            addLog(`Background run state: ${data.status}`);
+          }
+          statusPollingCount++;
+        } else {
+          statusText.innerHTML = `<span class="idle-dot"></span> Idle`;
+          triggerBtn.disabled = false;
+          triggerBtn.innerHTML = `<i data-lucide="play"></i> Trigger Benchmark`;
+          
+          if (statusPollingCount > 0) {
+            statusPollingCount = 0;
+            addLog('Benchmark run completed. Reloading metrics...');
+            await loadResults();
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching runner status:', e);
+      }
+      lucide.createIcons();
+    }
+
+    async function triggerBenchmark() {
+      addLog('Initiating manual benchmark run...');
+      try {
+        const res = await fetch('/v1/benchmark/run', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          addLog(data.message, 'info');
+          checkStatus();
+        } else {
+          addLog('Failed to start benchmark: ' + data.message, 'error');
+        }
+      } catch (e) {
+        addLog('Error triggering benchmark: ' + e.message, 'error');
+      }
+    }
+
+    async function saveConfig() {
+      const apiKey = document.getElementById('api-key-input').value.trim();
+      if (!apiKey) {
+        alert('Please enter an API key.');
+        return;
+      }
+      
+      addLog('Saving updated API Key configuration...');
+      try {
+        const res = await fetch('/v1/benchmark/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ api_key: apiKey })
+        });
+        const data = await res.json();
+        if (data.success) {
+          addLog('NVIDIA API Key updated and stored in config.json.');
+          alert('API Key updated successfully!');
+          document.getElementById('api-key-input').value = '';
+        } else {
+          addLog('Failed to save API Key: ' + data.message, 'error');
+          alert('Error: ' + data.message);
+        }
+      } catch (e) {
+        addLog('Error saving config: ' + e.message, 'error');
+        alert('Error: ' + e.message);
+      }
+    }
+
+    function switchTab(event, tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+  </script>
+
+  <style>
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</body>
+</html>
