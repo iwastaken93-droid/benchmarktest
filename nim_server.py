@@ -10,6 +10,7 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 # Resolve paths relative to this script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML_PATH = os.path.join(SCRIPT_DIR, "index.html")
+PLAYGROUND_HTML_PATH = os.path.join(SCRIPT_DIR, "playground.html")
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
 RESULTS_PATH = os.path.join(SCRIPT_DIR, "benchmark_results.json")
 
@@ -418,8 +419,8 @@ class NIMLocalServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        # 1. Serve index.html at root '/' or '/index.html'
-        if self.path in ('/', '/index.html'):
+        # 1. Serve index.html (benchmark dashboard) at root '/' or '/index.html' or '/benchmark' or '/benchmark.html'
+        if self.path in ('/', '/index.html', '/benchmark', '/benchmark.html'):
             try:
                 if not os.path.exists(INDEX_HTML_PATH):
                     raise FileNotFoundError(f"index.html not found at: {INDEX_HTML_PATH}")
@@ -438,14 +439,13 @@ class NIMLocalServerHandler(BaseHTTPRequestHandler):
                 self.wfile.write(f"Error serving index.html: {str(e)}".encode('utf-8'))
             return
 
-        # 1.5 Serve benchmark.html at '/benchmark' or '/benchmark.html'
-        if self.path in ('/benchmark', '/benchmark.html'):
+        # 1.5 Serve playground.html at '/playground', '/playground.html', '/chat', or '/chat.html'
+        if self.path in ('/playground', '/playground.html', '/chat', '/chat.html'):
             try:
-                benchmark_html_path = os.path.join(SCRIPT_DIR, "benchmark.html")
-                if not os.path.exists(benchmark_html_path):
-                    raise FileNotFoundError(f"benchmark.html not found at: {benchmark_html_path}")
+                if not os.path.exists(PLAYGROUND_HTML_PATH):
+                    raise FileNotFoundError(f"playground.html not found at: {PLAYGROUND_HTML_PATH}")
                     
-                with open(benchmark_html_path, 'rb') as f:
+                with open(PLAYGROUND_HTML_PATH, 'rb') as f:
                     content = f.read()
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/html')
@@ -456,7 +456,7 @@ class NIMLocalServerHandler(BaseHTTPRequestHandler):
                 self.send_response(500)
                 self.send_header('Content-Type', 'text/plain')
                 self.end_headers()
-                self.wfile.write(f"Error serving benchmark.html: {str(e)}".encode('utf-8'))
+                self.wfile.write(f"Error serving playground.html: {str(e)}".encode('utf-8'))
             return
 
         # 2. Mock endpoint GET /v1/models

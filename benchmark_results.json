@@ -2488,6 +2488,128 @@
             "tps": 146.86452606883995
           }
         ]
+      },
+      {
+        "model": "nvidia/nemotron-4-340b-instruct",
+        "avg_ttft_ms": 0.0,
+        "avg_latency_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "HTTP Error 404: Function 'b0fcd392-e905-4ab4-8eb9-aeae95c30b37': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 404: Function 'b0fcd392-e905-4ab4-8eb9-aeae95c30b37': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 404: Function 'b0fcd392-e905-4ab4-8eb9-aeae95c30b37': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-4-340b-reward",
+        "avg_ttft_ms": 0.0,
+        "avg_latency_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "HTTP Error 404: Function 'c53ee0e9-bad9-4e09-b365-52c9d6b71254': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 404: Function 'c53ee0e9-bad9-4e09-b365-52c9d6b71254': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 404: Function 'c53ee0e9-bad9-4e09-b365-52c9d6b71254': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-content-safety-reasoning-4b",
+        "avg_ttft_ms": 1165.6864484151204,
+        "avg_latency_ms": 17645.5020904541,
+        "avg_tps": 83.28331414906684,
+        "avg_tokens": 1372.6666666666667,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 758.4469318389893,
+            "latency_ms": 17661.020755767822,
+            "tokens": 1352,
+            "tps": 79.92865548603021
+          },
+          {
+            "success": true,
+            "ttft_ms": 1381.6602230072021,
+            "latency_ms": 17784.44194793701,
+            "tokens": 1373,
+            "tps": 83.6443490505493
+          },
+          {
+            "success": true,
+            "ttft_ms": 1356.95219039917,
+            "latency_ms": 17491.04356765747,
+            "tokens": 1393,
+            "tps": 86.276937910621
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-mini-4b-instruct",
+        "avg_ttft_ms": 0.0,
+        "avg_latency_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "HTTP Error 400"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 400"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 400"
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "avg_ttft_ms": 7709.412336349487,
+        "avg_latency_ms": 91406.24690055847,
+        "avg_tps": 22.557603400778547,
+        "avg_tokens": 1889.0,
+        "success_rate": 0.3333333333333333,
+        "trials": [
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": true,
+            "ttft_ms": 7709.412336349487,
+            "latency_ms": 91406.24690055847,
+            "tokens": 1889,
+            "tps": 22.557603400778547
+          }
+        ]
       }
     ],
     "status": "running"
@@ -3927,8 +4049,75 @@
             "error": "HTTP Error 404: Function 'f6b06895-d073-4714-8bb2-26c09e9f6597': Not found for account 'tJ65j564INBHkwlc2mN8CrSpFiHudeP6q5IxDyWZ4q4'"
           }
         ]
+      },
+      {
+        "model": "meta/llama-3.1-8b-instruct",
+        "avg_ttft_ms": 481.7720254262288,
+        "avg_latency_ms": 13791.113058725992,
+        "avg_tps": 104.92947548488046,
+        "avg_tokens": 1399.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 506.7601203918457,
+            "latency_ms": 13718.941688537598,
+            "tokens": 1430,
+            "tps": 108.1577627910658
+          },
+          {
+            "success": true,
+            "ttft_ms": 468.4600830078125,
+            "latency_ms": 14135.915517807007,
+            "tokens": 1520,
+            "tps": 111.13992705126516
+          },
+          {
+            "success": true,
+            "ttft_ms": 470.0958728790283,
+            "latency_ms": 13518.481969833374,
+            "tokens": 1247,
+            "tps": 95.49073661231037
+          }
+        ]
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-pro",
+        "avg_ttft_ms": 8091.348012288411,
+        "avg_latency_ms": 331305.89095751446,
+        "avg_tps": 0.6991795550108647,
+        "avg_tokens": 212.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 6771.374464035034,
+            "latency_ms": 223145.60842514038,
+            "tokens": 213,
+            "tps": 0.9797839424730597
+          },
+          {
+            "success": true,
+            "ttft_ms": 11502.07495689392,
+            "latency_ms": 386039.78395462036,
+            "tokens": 209,
+            "tps": 0.5553512904124231
+          },
+          {
+            "success": true,
+            "ttft_ms": 6000.594615936279,
+            "latency_ms": 384732.2804927826,
+            "tokens": 214,
+            "tps": 0.5624034321471113
+          }
+        ]
       }
     ],
+    "status": "running"
+  },
+  {
+    "timestamp": "2026-06-13T21:29:08.393304",
+    "results": [],
     "status": "running"
   }
 ]
