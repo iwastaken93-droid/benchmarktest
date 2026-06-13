@@ -134,35 +134,25 @@ def run_trial(model_id, api_key, prompt, max_tokens):
                 return {"success": False, "error": f"HTTP status {response.status}"}
                 
             first_chunk = True
-            buffer = ""
-            
-            while True:
-                chunk = response.read(1024)
-                if not chunk:
-                    break
-                
+            for line in response:
                 if first_chunk:
                     ttft = (time.time() - start_time) * 1000.0
                     first_chunk = False
-                
-                buffer += chunk.decode('utf-8', errors='ignore')
-                while "\n\n" in buffer:
-                    line, buffer = buffer.split("\n\n", 1)
-                    for part in line.split("\n"):
-                        part = part.strip()
-                        if part.startswith("data:"):
-                            data_str = part[5:].strip()
-                            if data_str == "[DONE]":
-                                break
-                            try:
-                                data_json = json.loads(data_str)
-                                choices = data_json.get("choices", [])
-                                if choices:
-                                    delta = choices[0].get("delta", {})
-                                    if "content" in delta or "reasoning" in delta or "reasoning_content" in delta:
-                                        token_count += 1
-                            except Exception:
-                                pass
+                    
+                line_str = line.decode('utf-8', errors='ignore').strip()
+                if line_str.startswith("data:"):
+                    data_str = line_str[5:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        data_json = json.loads(data_str)
+                        choices = data_json.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            if "content" in delta or "reasoning" in delta or "reasoning_content" in delta:
+                                token_count += 1
+                    except Exception:
+                        pass
             
             total_time = (time.time() - start_time) * 1000.0
             if token_count == 0:
