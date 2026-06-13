@@ -297,7 +297,14 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                     avg_tokens = 0.0
                     avg_tpot = 0.0
                     
-                if success_rate > 0.0 and avg_tokens >= 100:
+                is_filtered_guardrail = False
+                if not success_trials:
+                    for t in trials:
+                        if "too few tokens" in str(t.get("error", "")):
+                            is_filtered_guardrail = True
+                            break
+                            
+                if not is_filtered_guardrail:
                     model_summary = {
                         "model": model_id,
                         "avg_ttft_ms": avg_ttft,
@@ -310,7 +317,7 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                     }
                     save_incremental_model_result(model_summary)
                 else:
-                    print(f"[Benchmark] Skipping saving results for {model_id} (success_rate={success_rate}, avg_tokens={avg_tokens:.1f})")
+                    print(f"[Benchmark] Skipping saving results for filtered guardrail model {model_id}")
                 
             completed_tasks_count += 1
             print(f"[Benchmark] Trial {task_idx+1}/{total_tasks} complete ({model_id} trial {trial_idx+1}/3). Total completed: {completed_tasks_count}/{total_tasks}")
