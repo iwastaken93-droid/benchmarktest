@@ -1242,6 +1242,11 @@
                     </div>
                     <div style="width: 1px; height: 12px; background-color: var(--border-color);"></div>
                     <div class="metric-pill">
+                        <span class="label">TPOT:</span>
+                        <span class="value" id="live-tpot">0.0 ms/t</span>
+                    </div>
+                    <div style="width: 1px; height: 12px; background-color: var(--border-color);"></div>
+                    <div class="metric-pill">
                         <span class="label">Tokens:</span>
                         <span class="value" id="live-tokens">0</span>
                     </div>
@@ -1352,6 +1357,7 @@
         const elLiveMetrics = document.getElementById("live-metrics");
         const elLiveTtft = document.getElementById("live-ttft");
         const elLiveSpeed = document.getElementById("live-speed");
+        const elLiveTpot = document.getElementById("live-tpot");
         const elLiveTokens = document.getElementById("live-tokens");
         
         const elBtnThemeToggle = document.getElementById("btn-theme-toggle");
@@ -1992,6 +1998,13 @@
             const renderMs = (val) => val !== null ? `${Math.round(val)} ms` : "N/A";
             const renderSec = (val) => val !== null ? `${val.toFixed(1)} s` : "N/A";
             const renderTps = (val) => val !== null ? `${val.toFixed(1)} t/s` : "N/A";
+            const renderTpot = (val) => val !== null ? `${val.toFixed(1)} ms/t` : "N/A";
+
+            let tpot = null;
+            if (stats.firstTokenTime && stats.tokenCount > 1) {
+                const genMs = stats.endTime - stats.firstTokenTime;
+                tpot = genMs / (stats.tokenCount - 1);
+            }
 
             card.innerHTML = `
                 <div class="metric-item">
@@ -2001,6 +2014,10 @@
                 <div class="metric-item">
                     <span class="metric-label">Inference Speed</span>
                     <span class="metric-value highlight">${renderTps(stats.tps)}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">TPOT</span>
+                    <span class="metric-value highlight">${renderTpot(tpot)}</span>
                 </div>
                 <div class="metric-item">
                     <span class="metric-label">Total Output Tokens</span>
@@ -2060,6 +2077,7 @@
             // Show real-time telemetry overlay
             elLiveTtft.textContent = "Waiting...";
             elLiveSpeed.textContent = "0.0 t/s";
+            elLiveTpot.textContent = "0.0 ms/t";
             elLiveTokens.textContent = "0";
             elLiveMetrics.classList.add("visible");
 
@@ -2295,11 +2313,18 @@
                                     // Update display dynamically
                                     updateAssistantBubble(assistantBubble, parsedRes.thoughts, parsedRes.finalAnswer, parsedRes.isStillThinking, elapsedSec, false);
                                     
-                                    // Calculate running throughput
+                                    // Calculate running throughput & TPOT
                                     const runDuration = (performance.now() - stats.firstTokenTime) / 1000;
                                     if (runDuration > 0) {
                                         const currentTps = (stats.tokenCount - 1) / runDuration;
                                         elLiveSpeed.textContent = `${currentTps.toFixed(1)} t/s`;
+                                        
+                                        if (stats.tokenCount > 1) {
+                                            const currentTpot = (runDuration * 1000) / (stats.tokenCount - 1);
+                                            elLiveTpot.textContent = `${currentTpot.toFixed(1)} ms/t`;
+                                        } else {
+                                            elLiveTpot.textContent = `0.0 ms/t`;
+                                        }
                                     }
                                     elLiveTokens.textContent = stats.tokenCount;
                                 }

@@ -663,6 +663,7 @@
                 <tr>
                   <th>Model ID</th>
                   <th>Avg Speed (TPS)</th>
+                  <th>TPOT (ms/t)</th>
                   <th>Avg TTFT (ms)</th>
                   <th>Total Latency (s)</th>
                   <th>Reliability</th>
@@ -670,7 +671,7 @@
               </thead>
               <tbody id="table-body">
                 <tr>
-                  <td colspan="5" class="empty-state">
+                  <td colspan="6" class="empty-state">
                     <i data-lucide="loader-2" class="pulse-dot" style="animation: spin 1.5s linear infinite; margin: 0 auto; width: 24px; height: 24px; display: block;"></i>
                     Loading benchmark metrics...
                   </td>
@@ -845,6 +846,17 @@
           : `<span style="color: var(--text-muted);">N/A</span>`;
         tr.appendChild(tdSpeed);
         
+        // TPOT cell
+        const tdTPOT = document.createElement('td');
+        let tpot = r.avg_tpot_ms;
+        if (tpot === undefined || tpot === null) {
+            tpot = r.avg_tps > 0 ? (1000 / r.avg_tps) : 0.0;
+        }
+        tdTPOT.innerHTML = tpot > 0 
+          ? `<strong>${tpot.toFixed(1)}</strong> <span style="font-size:0.75rem; color: var(--text-secondary);">ms/t</span>`
+          : `<span style="color: var(--text-muted);">N/A</span>`;
+        tr.appendChild(tdTPOT);
+        
         // TTFT cell
         const tdTTFT = document.createElement('td');
         tdTTFT.innerText = r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'N/A';
@@ -1009,7 +1021,7 @@
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = `
         <tr>
-          <td colspan="5" class="empty-state">
+          <td colspan="6" class="empty-state">
             <i data-lucide="alert-circle"></i>
             No benchmark data available. Click "Trigger Benchmark" to run the first evaluation.
           </td>

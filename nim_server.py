@@ -96,12 +96,14 @@ def run_mock_trial(model_id):
     # 95% success rate for mock trials
     success = random.random() < 0.95
     if success:
+        tpot = (latency - ttft) / (tokens - 1) if tokens > 1 else 0.0
         return {
             "success": True,
             "ttft_ms": ttft,
             "latency_ms": latency,
             "tokens": tokens,
-            "tps": tps
+            "tps": tps,
+            "tpot_ms": tpot
         }
     else:
         return {
@@ -185,15 +187,18 @@ def run_trial(model_id, api_key, prompt, max_tokens):
             latency_delta_s = (total_time - ttft) / 1000.0
             if latency_delta_s > 0 and token_count > 1:
                 tps = (token_count - 1) / latency_delta_s
+                tpot = (total_time - ttft) / (token_count - 1)
             else:
                 tps = 0.0
+                tpot = 0.0
                 
             return {
                 "success": True,
                 "ttft_ms": ttft,
                 "latency_ms": total_time,
                 "tokens": token_count,
-                "tps": tps
+                "tps": tps,
+                "tpot_ms": tpot
             }
     except urllib.error.HTTPError as e:
         error_msg = f"HTTP Error {e.code}"
@@ -284,11 +289,13 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                     avg_latency = sum(t["latency_ms"] for t in success_trials) / len(success_trials)
                     avg_tps = sum(t["tps"] for t in success_trials) / len(success_trials)
                     avg_tokens = sum(t["tokens"] for t in success_trials) / len(success_trials)
+                    avg_tpot = sum(t.get("tpot_ms", 0.0) for t in success_trials) / len(success_trials)
                 else:
                     avg_ttft = 0.0
                     avg_latency = 0.0
                     avg_tps = 0.0
                     avg_tokens = 0.0
+                    avg_tpot = 0.0
                     
                 if success_rate > 0.0 and avg_tokens >= 100:
                     model_summary = {
@@ -296,6 +303,7 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                         "avg_ttft_ms": avg_ttft,
                         "avg_latency_ms": avg_latency,
                         "avg_tps": avg_tps,
+                        "avg_tpot_ms": avg_tpot,
                         "avg_tokens": avg_tokens,
                         "success_rate": success_rate,
                         "trials": trials
