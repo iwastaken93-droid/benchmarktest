@@ -2076,8 +2076,6 @@
             let systemContent = elSystemPrompt.value;
             if (elEnableThinking.checked && isReasoning) {
                 systemContent = "detailed thinking on\n\n" + systemContent;
-            } else if (isReasoning) {
-                systemContent = "detailed thinking off\n\n" + systemContent + "\n\nAnswer directly without any <think> tags.";
             }
 
             // Assemble API payload
@@ -2119,21 +2117,6 @@
                     thinking_budget: budget
                 };
                 payload.reasoning_effort = elReasoningEffort.value;
-            } else if (isReasoning) {
-                // If it is a reasoning model but thinking is disabled, explicitly turn it off
-                payload.chat_template_kwargs = {
-                    thinking: false,
-                    enable_thinking: false,
-                    clear_thinking: false
-                };
-                payload.thinking = {
-                    type: "disabled"
-                };
-                payload.thinking_token_budget = 0;
-                payload.max_thinking_tokens = 0;
-                payload.nvext = {
-                    max_thinking_tokens: 0
-                };
             }
 
             // Request usage statistics in stream chunks for cloud models
