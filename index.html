@@ -702,12 +702,14 @@
     let speedChart = null;
     let ttftChart = null;
     let reliabilityChart = null;
+    let isStaticMode = false;
+    let statusIntervalId = null;
 
     // Load initial data on startup
     window.addEventListener('DOMContentLoaded', () => {
       loadResults();
       checkStatus();
-      setInterval(checkStatus, 4000);
+      statusIntervalId = setInterval(checkStatus, 4000);
     });
 
     function addLog(message, type = 'info') {
@@ -731,9 +733,36 @@
 
     async function loadResults() {
       try {
-        const res = await fetch('/v1/benchmark/results');
-        const history = await res.json();
-        
+        let history = null;
+        let fetchedFromAPI = false;
+
+        // 1. Try to fetch from the local API endpoint
+        try {
+          const res = await fetch('/v1/benchmark/results');
+          if (res.ok) {
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              history = await res.json();
+              fetchedFromAPI = true;
+            }
+          }
+        } catch (apiErr) {
+          // Ignore and fallback
+        }
+
+        // 2. Try to fetch the static benchmark_results.json file from the repository
+        if (!fetchedFromAPI) {
+          const res = await fetch('benchmark_results.json');
+          if (!res.ok) {
+            throw new Error(`Failed to load benchmark_results.json (HTTP ${res.status})`);
+          }
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("text/html")) {
+            throw new Error("Returned content is HTML/404 page, not JSON");
+          }
+          history = await res.json();
+        }
+
         if (!history || history.length === 0) {
           showEmptyState();
           return;
@@ -1000,8 +1029,15 @@
     async function checkStatus() {
       try {
         const res = await fetch('/v1/benchmark/status');
-        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Response was not JSON");
+        }
         
+        const data = await res.json();
         const statusText = document.getElementById('runner-status');
         const triggerBtn = document.getElementById('trigger-btn');
         
@@ -1026,12 +1062,37 @@
           }
         }
       } catch (e) {
-        console.error('Error fetching runner status:', e);
+        // Switch to Static Mode
+        isStaticMode = true;
+        const statusText = document.getElementById('runner-status');
+        statusText.innerHTML = `<span class="static-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:#888; margin-right:6px;"></span> Static Mode`;
+        
+        const triggerBtn = document.getElementById('trigger-btn');
+        triggerBtn.disabled = true;
+        triggerBtn.title = "Manual trigger is disabled in static mode (GitHub Pages). Benchmarks run hourly via GitHub Actions.";
+        triggerBtn.innerHTML = `<i data-lucide="play" style="opacity: 0.5;"></i> Trigger (Static Mode)`;
+        
+        const configSaveBtn = document.querySelector('.config-form button');
+        if (configSaveBtn) {
+          configSaveBtn.disabled = true;
+          configSaveBtn.title = "API keys cannot be modified from the frontend in static mode.";
+        }
+        
+        addLog("Running in Static Mode (local server unconnected). Manual triggers are disabled. Benchmark history is updated hourly via GitHub Actions.", "info");
+        
+        if (statusIntervalId) {
+          clearInterval(statusIntervalId);
+          statusIntervalId = null;
+        }
       }
       lucide.createIcons();
     }
 
     async function triggerBenchmark() {
+      if (isStaticMode) {
+        addLog('Cannot trigger benchmark: Running in Static Mode.', 'error');
+        return;
+      }
       addLog('Initiating manual benchmark run...');
       try {
         const res = await fetch('/v1/benchmark/run', { method: 'POST' });
@@ -1048,6 +1109,10 @@
     }
 
     async function saveConfig() {
+      if (isStaticMode) {
+        alert('API Key configuration cannot be updated in Static Mode (GitHub Pages).');
+        return;
+      }
       const apiKey = document.getElementById('api-key-input').value.trim();
       if (!apiKey) {
         alert('Please enter an API key.');
