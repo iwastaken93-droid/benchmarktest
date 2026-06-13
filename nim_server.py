@@ -336,8 +336,8 @@ def run_benchmark_suite():
             "status": "running"
         }
         history.append(new_run)
-        if len(history) > 24:
-            history = history[-24:]
+        if len(history) > 336:
+            history = history[-336:]
             
         try:
             with open(RESULTS_PATH, "w") as f:
