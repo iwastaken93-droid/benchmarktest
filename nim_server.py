@@ -22,6 +22,9 @@ completed_tasks_count = 0
 active_run_timestamp = ""
 
 def get_api_key():
+    env_key = os.environ.get("NVIDIA_API_KEY")
+    if env_key:
+        return env_key
     try:
         if os.path.exists(CONFIG_PATH):
             with open(CONFIG_PATH, "r") as f:
@@ -738,4 +741,8 @@ def run(server_class=ThreadingHTTPServer, handler_class=NIMLocalServerHandler, p
     httpd.serve_forever()
 
 if __name__ == '__main__':
-    run()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == '--run-once':
+        run_benchmark_suite()
+    else:
+        run()
