@@ -514,6 +514,37 @@
     .tab-content.active {
       display: block;
     }
+
+    /* Segmented view toggle control */
+    .view-toggle-group {
+      display: inline-flex;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .view-toggle-group .toggle-btn {
+      background: none;
+      border: none;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .view-toggle-group .toggle-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .view-toggle-group .toggle-btn.active {
+      background-color: var(--card-bg);
+      color: var(--accent-green) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -652,10 +683,16 @@
       <!-- Right Column: Comparative Metrics Table -->
       <div class="col-right">
         <div class="card" style="flex: 1; display: flex; flex-direction: column;">
-          <h2 class="section-title">
-            <i data-lucide="bar-chart-3"></i>
-            Model Performance Comparison
-          </h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+            <h2 class="section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">
+              <i data-lucide="bar-chart-3"></i>
+              Model Performance Comparison
+            </h2>
+            <div class="view-toggle-group">
+              <button id="btn-view-latest" class="toggle-btn active" onclick="setViewMode('latest')">Latest Run</button>
+              <button id="btn-view-7day" class="toggle-btn" onclick="setViewMode('7day')">7-Day Average</button>
+            </div>
+          </div>
           
           <div class="table-container" style="flex: 1;">
             <table id="comparison-table">
@@ -707,6 +744,8 @@
     let statusIntervalId = null;
     let currentResults = [];
     let showFailedModels = false;
+    let fullHistory = [];
+    let currentViewMode = 'latest';
 
     // Load initial data on startup
     window.addEventListener('DOMContentLoaded', () => {
@@ -773,24 +812,134 @@
         
         // Take the latest run
         const latestRun = history[history.length - 1];
-        currentResults = latestRun.results || [];
-        populateStats(latestRun);
-        populateTable(currentResults);
-        renderCharts(currentResults);
-        addLog(`Successfully loaded benchmark run from ${new Date(latestRun.timestamp).toLocaleString()}.`);
+        fullHistory = history;
+        setViewMode(currentViewMode);
+        addLog(`Successfully loaded benchmark run history with ${history.length} runs.`);
       } catch (e) {
         addLog('Failed to fetch benchmark history: ' + e.message, 'error');
         showEmptyState();
       }
     }
 
-    function populateStats(run) {
-      const results = run.results;
+    function setViewMode(mode) {
+      currentViewMode = mode;
       
-      // 1. Last Run
-      const date = new Date(run.timestamp);
-      document.getElementById('stat-last-run').innerText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      document.getElementById('stat-last-run').title = date.toLocaleString();
+      const btnLatest = document.getElementById('btn-view-latest');
+      const btn7Day = document.getElementById('btn-view-7day');
+      
+      if (!btnLatest || !btn7Day) return;
+      
+      if (mode === 'latest') {
+        btnLatest.classList.add('active');
+        btn7Day.classList.remove('active');
+        
+        if (fullHistory.length > 0) {
+          const latestRun = fullHistory[fullHistory.length - 1];
+          currentResults = latestRun.results || [];
+          
+          const date = new Date(latestRun.timestamp);
+          const timestampLabel = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          populateStats(currentResults, timestampLabel);
+          populateTable(currentResults);
+          renderCharts(currentResults);
+        }
+      } else {
+        btn7Day.classList.add('active');
+        btnLatest.classList.remove('active');
+        
+        if (fullHistory.length > 0) {
+          currentResults = calculate7DayAverages(fullHistory);
+          populateStats(currentResults, "7-Day Avg");
+          populateTable(currentResults);
+          renderCharts(currentResults);
+        }
+      }
+    }
+
+    function calculate7DayAverages(history) {
+      if (!history || history.length === 0) return [];
+      
+      const latestRun = history[history.length - 1];
+      const latestTimestamp = new Date(latestRun.timestamp).getTime();
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      const sevenDaysAgo = latestTimestamp - sevenDaysMs;
+      
+      const eligibleRuns = history.filter(run => {
+        const runTime = new Date(run.timestamp).getTime();
+        return runTime >= sevenDaysAgo && run.status === 'completed';
+      });
+      
+      if (eligibleRuns.length === 0) return latestRun.results || [];
+      
+      const modelStats = {};
+      
+      eligibleRuns.forEach(run => {
+        const results = run.results || [];
+        results.forEach(r => {
+          const m = r.model;
+          if (!modelStats[m]) {
+            modelStats[m] = {
+              model: m,
+              ttft_sums: 0,
+              latency_sums: 0,
+              tps_sums: 0,
+              tpot_sums: 0,
+              tokens_sums: 0,
+              success_rate_sums: 0,
+              successful_runs_count: 0,
+              total_runs_count: 0,
+              all_trials: []
+            };
+          }
+          
+          const stats = modelStats[m];
+          stats.total_runs_count++;
+          stats.success_rate_sums += r.success_rate;
+          if (r.trials) {
+              stats.all_trials.push(...r.trials);
+          }
+          
+          if (r.success_rate > 0) {
+            stats.successful_runs_count++;
+            stats.ttft_sums += r.avg_ttft_ms || 0;
+            stats.latency_sums += r.avg_latency_ms || 0;
+            stats.tps_sums += r.avg_tps || 0;
+            
+            let tpot = r.avg_tpot_ms;
+            if (tpot === undefined || tpot === null) {
+                tpot = r.avg_tps > 0 ? (1000 / r.avg_tps) : 0;
+            }
+            stats.tpot_sums += tpot;
+            stats.tokens_sums += r.avg_tokens || 0;
+          }
+        });
+      });
+      
+      const averagedResults = [];
+      Object.keys(modelStats).forEach(m => {
+        const stats = modelStats[m];
+        const hasSuccess = stats.successful_runs_count > 0;
+        
+        averagedResults.push({
+          model: m,
+          avg_ttft_ms: hasSuccess ? stats.ttft_sums / stats.successful_runs_count : 0,
+          avg_latency_ms: hasSuccess ? stats.latency_sums / stats.successful_runs_count : 0,
+          avg_tps: hasSuccess ? stats.tps_sums / stats.successful_runs_count : 0,
+          avg_tpot_ms: hasSuccess ? stats.tpot_sums / stats.successful_runs_count : 0,
+          avg_tokens: hasSuccess ? stats.tokens_sums / stats.successful_runs_count : 0,
+          success_rate: stats.success_rate_sums / stats.total_runs_count,
+          trials: stats.all_trials
+        });
+      });
+      
+      return averagedResults;
+    }
+
+    function populateStats(results, timestampLabel) {
+      // 1. Last Run label
+      document.getElementById('stat-last-run').innerText = timestampLabel;
+      document.getElementById('stat-last-run').title = "Evaluation time context";
       
       if (!results || results.length === 0) return;
       
