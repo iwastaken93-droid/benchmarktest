@@ -394,16 +394,16 @@ def run_benchmark_suite():
         except Exception as e:
             print(f"[Benchmark] Error saving initial run placeholder: {e}")
             
-        # Build tasks queue
+        # Build tasks queue (interleave trials across different models)
         all_tasks = []
-        for model_id in models_to_test:
-            for trial_idx in range(3):
+        for trial_idx in range(3):
+            for model_id in models_to_test:
                 all_tasks.append((model_id, trial_idx))
                 
         total_tasks = len(all_tasks)
         print(f"[Benchmark] Starting queue with {total_tasks} total trials...")
         
-        # Spawn thread for each task every 6.0 seconds (10 requests/min, well under 20 requests/min limit)
+        # Spawn thread for each task every 2.0 seconds (30 requests/min)
         for idx, (model_id, trial_idx) in enumerate(all_tasks):
             t = threading.Thread(
                 target=execute_trial_task, 
@@ -412,8 +412,8 @@ def run_benchmark_suite():
             )
             t.start()
             
-            # Wait 6 seconds before starting the next trial to respect rate limit and run in parallel
-            time.sleep(6.0)
+            # Wait 2.0 seconds before starting the next trial to run at 30 RPM
+            time.sleep(2.0)
             
     except Exception as e:
         print(f"[Benchmark] Error in benchmark suite: {e}")
