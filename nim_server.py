@@ -760,8 +760,13 @@ class NIMLocalServerHandler(BaseHTTPRequestHandler):
         self.send_response(404)
         self.end_headers()
 
-def run(server_class=ThreadingHTTPServer, handler_class=NIMLocalServerHandler, port=8000):
-    start_benchmark_thread()
+def run(server_class=ThreadingHTTPServer, handler_class=NIMLocalServerHandler, port=8000, start_scheduler=False):
+    if start_scheduler:
+        start_benchmark_thread()
+    else:
+        print("[Benchmark] Background scheduled benchmarks are disabled by default when running locally.")
+        print("[Benchmark] To enable hourly scheduled benchmarks, run with: python nim_server.py --scheduler")
+        print("[Benchmark] Or set environment variable ENABLE_SCHEDULER=true")
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print(f"============================================================")
@@ -776,4 +781,18 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '--run-once':
         run_benchmark_suite()
     else:
-        run()
+        # Check command line flags or environment variables
+        start_scheduler = False
+        port = 8000
+        for arg in sys.argv[1:]:
+            if arg == '--scheduler':
+                start_scheduler = True
+            elif arg.startswith('--port='):
+                try:
+                    port = int(arg.split('=')[1])
+                except ValueError:
+                    pass
+        if os.environ.get("ENABLE_SCHEDULER", "").lower() in ("true", "1", "yes"):
+            start_scheduler = True
+
+        run(port=port, start_scheduler=start_scheduler)
