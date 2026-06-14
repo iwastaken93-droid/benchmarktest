@@ -35,6 +35,23 @@ def get_api_key():
         print(f"[Server] Error reading config: {e}")
     return ""
 
+def resolve_auth_header(auth_header):
+    # Inject API key from config.json if not provided, is null/undefined/placeholder,
+    # or doesn't contain a real NVIDIA API key starting with 'nvapi-'
+    has_real_key = False
+    if auth_header:
+        parts = auth_header.strip().split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+            if token.startswith("nvapi-"):
+                has_real_key = True
+                
+    if not has_real_key:
+        key = get_api_key()
+        if key:
+            return f"Bearer {key}"
+    return auth_header
+
 def save_api_key(api_key):
     try:
         data = {}
@@ -551,11 +568,7 @@ class NIMLocalServerHandler(BaseHTTPRequestHandler):
             target_url = f"https://integrate.api.nvidia.com/v1/{target_path}"
             
             auth_header = self.headers.get('Authorization')
-            # Inject API key from config.json if not provided or empty in client headers
-            if not auth_header or auth_header.strip() in ("Bearer", "Bearer null", "Bearer undefined"):
-                key = get_api_key()
-                if key:
-                    auth_header = f"Bearer {key}"
+            auth_header = resolve_auth_header(auth_header)
                     
             req = urllib.request.Request(target_url, method='GET')
             if auth_header:
@@ -689,11 +702,7 @@ class NIMLocalServerHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             
             auth_header = self.headers.get('Authorization')
-            # Inject API key from config.json if not provided or empty in client headers
-            if not auth_header or auth_header.strip() in ("Bearer", "Bearer null", "Bearer undefined"):
-                key = get_api_key()
-                if key:
-                    auth_header = f"Bearer {key}"
+            auth_header = resolve_auth_header(auth_header)
                     
             content_type = self.headers.get('Content-Type', 'application/json')
             
