@@ -69,7 +69,63 @@ def save_api_key(api_key):
         print(f"[Server] Error saving config: {e}")
         return False
 
+BLACKLISTED_MODELS = {
+    "01-ai/yi-large",
+    "adept/fuyu-8b",
+    "ai21labs/jamba-1.5-large-instruct",
+    "aisingapore/sea-lion-7b-instruct",
+    "baai/bge-m3",
+    "bigcode/starcoder2-15b",
+    "databricks/dbrx-instruct",
+    "deepseek-ai/deepseek-coder-6.7b-instruct",
+    "google/codegemma-1.1-7b",
+    "google/codegemma-7b",
+    "google/deplot",
+    "google/gemma-2b",
+    "google/gemma-3-12b-it",
+    "google/gemma-3-4b-it",
+    "google/recurrentgemma-2b",
+    "ibm/granite-3.0-3b-a800m-instruct",
+    "ibm/granite-3.0-8b-instruct",
+    "ibm/granite-34b-code-instruct",
+    "ibm/granite-8b-code-instruct",
+    "meta/codellama-70b",
+    "meta/llama2-70b",
+    "microsoft/phi-3-vision-128k-instruct",
+    "microsoft/phi-3.5-moe-instruct",
+    "mistralai/codestral-22b-instruct-v0.1",
+    "mistralai/mistral-7b-instruct-v0.3",
+    "mistralai/mistral-large",
+    "mistralai/mistral-large-2-instruct",
+    "mistralai/mixtral-8x22b-v0.1",
+    "nv-mistralai/mistral-nemo-12b-instruct",
+    "nvidia/cosmos-reason2-8b",
+    "nvidia/llama-3.1-nemotron-51b-instruct",
+    "nvidia/ai-synthetic-video-detector",
+    "nvidia/llama-3.1-nemotron-70b-instruct",
+    "nvidia/gliner-pii",
+    "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+    "nvidia/llama3-chatqa-1.5-70b",
+    "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+    "nvidia/nemotron-4-340b-instruct",
+    "nvidia/nemotron-4-340b-reward",
+    "nvidia/nemotron-nano-3-30b-a3b",
+    "nvidia/nemoretriever-parse",
+    "nvidia/riva-translate-4b-instruct",
+    "nvidia/vila",
+    "nvidia/nemotron-parse",
+    "nvidia/riva-translate-4b-instruct-v1.1",
+    "writer/palmyra-creative-122b",
+    "writer/palmyra-fin-70b-32k",
+    "writer/palmyra-med-70b",
+    "writer/palmyra-med-70b-32k",
+    "upstage/solar-10.7b-instruct",
+    "zyphra/zamba2-7b-instruct"
+}
+
 def is_chat_model(model_id):
+    if model_id in BLACKLISTED_MODELS:
+        return False
     model_id_lower = model_id.lower()
     exclude_keywords = [
         'embed', 'rerank', 'clip', 'similarity', 'image', 'stable-diffusion', 'whisper', 'sdxl', 
