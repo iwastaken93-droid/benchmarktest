@@ -1,7 +1,7 @@
 name: Hourly NIM Performance Benchmark
 on:
   schedule:
-    - cron: '23 * * * *' # Runs every hour (using minute 23 to avoid peak top-of-hour congestion on GitHub Actions)
+    - cron: '29 * * * *' # Runs every hour (using minute 29 to avoid peak top-of-hour congestion on GitHub Actions)
   workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
 
 jobs:
