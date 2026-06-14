@@ -138,7 +138,8 @@ def run_trial(model_id, api_key, prompt, max_tokens):
         "model": model_id,
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": max_tokens,
-        "stream": True
+        "stream": True,
+        "stream_options": {"include_usage": True}
     }
     
     req_data = json.dumps(payload).encode('utf-8')
@@ -150,6 +151,7 @@ def run_trial(model_id, api_key, prompt, max_tokens):
     ttft = 0.0
     total_time = 0.0
     generated_text = ""
+    actual_token_count = None
     
     try:
         with urllib.request.urlopen(req, timeout=300) as response:
@@ -172,6 +174,11 @@ def run_trial(model_id, api_key, prompt, max_tokens):
                         if "error" in data_json:
                             err_msg = data_json["error"].get("message", "Mid-stream API error")
                             return {"success": False, "error": f"API Error: {err_msg}"}
+                        
+                        # Extract exact token count from usage metadata if provided
+                        if "usage" in data_json:
+                            actual_token_count = data_json["usage"].get("completion_tokens")
+                            
                         choices = data_json.get("choices", [])
                         if choices:
                             delta = choices[0].get("delta", {})
@@ -187,15 +194,18 @@ def run_trial(model_id, api_key, prompt, max_tokens):
             if not generated_text.strip():
                 return {"success": False, "error": "Empty response or stream error"}
                 
-            # Estimate token count based on generated text
-            word_count = len(generated_text.split())
-            char_count = len(generated_text)
-            if word_count > 0:
-                token_count = int(word_count * 1.33)
+            # If the API returned a valid actual token count, use it. Otherwise, fallback to estimation.
+            if actual_token_count is not None and actual_token_count > 0:
+                token_count = actual_token_count
             else:
-                token_count = int(char_count / 4)
-            if token_count == 0:
-                token_count = 1
+                word_count = len(generated_text.split())
+                char_count = len(generated_text)
+                if word_count > 0:
+                    token_count = int(word_count * 1.33)
+                else:
+                    token_count = int(char_count / 4)
+                if token_count == 0:
+                    token_count = 1
 
             # Reject safety / guardrail models that generate very short responses
             if token_count < 100:
