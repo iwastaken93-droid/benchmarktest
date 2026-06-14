@@ -241,7 +241,7 @@ def _run_trial_internal(model_id, api_key, prompt, max_tokens, url, use_stream_o
     actual_token_count = None
     
     try:
-        with urllib.request.urlopen(req, timeout=300) as response:
+        with urllib.request.urlopen(req, timeout=420) as response:
             if response.status != 200:
                 return {"success": False, "error": f"HTTP status {response.status}"}
                 
