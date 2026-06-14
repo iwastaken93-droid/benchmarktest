@@ -424,7 +424,7 @@ def trigger_benchmark_async():
 def benchmark_scheduler_loop():
     # Wait 10 seconds after server startup
     time.sleep(10)
-    last_run_time = 0.0
+    last_run_time = time.time()
     
     while True:
         current_time = time.time()
