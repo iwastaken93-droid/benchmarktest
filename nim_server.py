@@ -175,8 +175,8 @@ def run_trial(model_id, api_key, prompt, max_tokens):
                         choices = data_json.get("choices", [])
                         if choices:
                             delta = choices[0].get("delta", {})
-                            content = delta.get("content", "")
-                            reasoning = delta.get("reasoning", "") or delta.get("reasoning_content", "")
+                            content = delta.get("content") or ""
+                            reasoning = delta.get("reasoning") or delta.get("reasoning_content") or ""
                             generated_text += content + reasoning
                     except Exception:
                         pass
