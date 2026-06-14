@@ -135,7 +135,7 @@ def run_trial(model_id, api_key, prompt, max_tokens):
     generated_text = ""
     
     try:
-        with urllib.request.urlopen(req, timeout=45) as response:
+        with urllib.request.urlopen(req, timeout=300) as response:
             if response.status != 200:
                 return {"success": False, "error": f"HTTP status {response.status}"}
                 
