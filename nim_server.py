@@ -196,7 +196,7 @@ def run_trial(model_id, api_key, prompt, max_tokens):
     use_stream_options = True
     if any(kw in model_lower for kw in [
         "deepseek", "qwen", "solar", "gliner", "palmyra", 
-        "nemotron-mini", "parse", "translate", "vila", "deplot"
+        "nemotron-mini", "parse", "translate", "vila", "deplot", "gemma-2-"
     ]):
         use_stream_options = False
         
