@@ -415,6 +415,16 @@ def run_benchmark_suite():
             # Wait 2.0 seconds before starting the next trial to run at 30 RPM
             time.sleep(2.0)
             
+        # Wait for all tasks to complete
+        print("[Benchmark] All trials spawned. Waiting for active runs to complete...")
+        while True:
+            running_state = False
+            with benchmark_lock:
+                running_state = benchmark_running
+            if not running_state:
+                break
+            time.sleep(1.0)
+            
     except Exception as e:
         print(f"[Benchmark] Error in benchmark suite: {e}")
         benchmark_status = f"Error: {str(e)}"
