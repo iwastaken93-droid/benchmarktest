@@ -673,6 +673,12 @@
       </div>
 
       <div id="tab-diurnal" class="tab-content">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+          <div class="view-toggle-group">
+            <button id="btn-diurnal-all" class="toggle-btn active" onclick="setDiurnalRange('all')">All Time</button>
+            <button id="btn-diurnal-weekly" class="toggle-btn" onclick="setDiurnalRange('weekly')">Last 7 Days</button>
+          </div>
+        </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px;">
           <div class="chart-wrapper" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
             <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: #f3f4f6; display: flex; align-items: center; gap: 8px;">
@@ -829,6 +835,7 @@
     let selectedModels = [];
     let currentSortCol = 'tps';
     let currentSortOrder = 'desc';
+    let currentDiurnalRange = 'all';
 
     // Load initial data on startup
     window.addEventListener('DOMContentLoaded', () => {
@@ -1620,10 +1627,41 @@
       return result;
     }
 
+    function setDiurnalRange(range) {
+      currentDiurnalRange = range;
+      
+      const btnAll = document.getElementById('btn-diurnal-all');
+      const btnWeekly = document.getElementById('btn-diurnal-weekly');
+      
+      if (!btnAll || !btnWeekly) return;
+      
+      if (range === 'all') {
+        btnAll.classList.add('active');
+        btnWeekly.classList.remove('active');
+      } else {
+        btnWeekly.classList.add('active');
+        btnAll.classList.remove('active');
+      }
+      
+      renderHourlyCharts();
+    }
+
     function renderHourlyCharts() {
       if (!fullHistory || fullHistory.length === 0) return;
       
-      const diurnalData = calculateHourlyDiurnalData(fullHistory, selectedModels);
+      let historyToUse = fullHistory;
+      if (currentDiurnalRange === 'weekly') {
+        const latestTimestamp = new Date(fullHistory[fullHistory.length - 1].timestamp).getTime();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        const sevenDaysAgo = latestTimestamp - sevenDaysMs;
+        
+        historyToUse = fullHistory.filter(run => {
+          const runTime = new Date(run.timestamp).getTime();
+          return runTime >= sevenDaysAgo;
+        });
+      }
+      
+      const diurnalData = calculateHourlyDiurnalData(historyToUse, selectedModels);
       
       const labels = Array.from({ length: 24 }, (_, i) => {
         const ampm = i >= 12 ? 'PM' : 'AM';

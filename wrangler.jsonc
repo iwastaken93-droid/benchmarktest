@@ -1,14 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "benchmarktesthd",
+  "main": "src/index.js",
   "compatibility_date": "2026-06-14",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "."
+    "directory": "public"
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "triggers": {
+    "crons": [
+      "0 * * * *"
+    ]
+  }
 }

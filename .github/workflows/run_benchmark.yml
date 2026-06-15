@@ -28,7 +28,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add benchmark_results.json
+          git add public/benchmark_results.json
           git commit -m "Update benchmark metrics [skip ci]" || exit 0
           git pull --rebase origin master
           git push origin master

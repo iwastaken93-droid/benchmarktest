@@ -9,10 +9,10 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 # Resolve paths relative to this script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-INDEX_HTML_PATH = os.path.join(SCRIPT_DIR, "index.html")
-PLAYGROUND_HTML_PATH = os.path.join(SCRIPT_DIR, "playground.html")
+INDEX_HTML_PATH = os.path.join(SCRIPT_DIR, "public", "index.html")
+PLAYGROUND_HTML_PATH = os.path.join(SCRIPT_DIR, "public", "playground.html")
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
-RESULTS_PATH = os.path.join(SCRIPT_DIR, "benchmark_results.json")
+RESULTS_PATH = os.path.join(SCRIPT_DIR, "public", "benchmark_results.json")
 
 # Threading locks and states
 benchmark_lock = threading.Lock()
