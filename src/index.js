@@ -34,6 +34,35 @@ export default {
       });
     }
 
+    // Endpoint: GET /benchmark_results.json (or /public/benchmark_results.json)
+    // Fetch directly from GitHub to bypass Cloudflare Pages deployment delay
+    if ((url.pathname === '/benchmark_results.json' || url.pathname === '/public/benchmark_results.json') && request.method === 'GET') {
+      try {
+        const repo = env.GITHUB_REPO || 'iwastaken93-droid/benchmarktest';
+        const ref = env.GITHUB_REF || 'master';
+        const rawUrl = `https://raw.githubusercontent.com/${repo}/${ref}/public/benchmark_results.json?t=${Date.now()}`;
+        
+        const response = await fetch(rawUrl, {
+          headers: {
+            'User-Agent': 'cloudflare-worker-results-proxy'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          return new Response(JSON.stringify(data), {
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+            }
+          });
+        }
+      } catch (e) {
+        // Fallback to static asset serving if github fetch fails
+        console.error("Failed to fetch live results from GitHub, falling back to static asset:", e);
+      }
+    }
+
     // Fallback: serve static frontend dashboard/results assets from CDN
     return env.ASSETS.fetch(request);
   },
