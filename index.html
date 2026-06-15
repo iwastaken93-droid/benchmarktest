@@ -644,6 +644,7 @@
           <button class="tab-btn" onclick="switchTab(event, 'tab-tpot')">TPOT (ms/token)</button>
           <button class="tab-btn" onclick="switchTab(event, 'tab-ttft')">TTFT Latency</button>
           <button class="tab-btn" onclick="switchTab(event, 'tab-reliability')">Reliability</button>
+          <button class="tab-btn" onclick="switchTab(event, 'tab-diurnal')">Time of Day Analysis</button>
         </div>
       </div>
       
@@ -668,6 +669,29 @@
       <div id="tab-reliability" class="tab-content">
         <div class="chart-container" style="height: 400px;">
           <canvas id="reliabilityChart"></canvas>
+        </div>
+      </div>
+
+      <div id="tab-diurnal" class="tab-content">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px;">
+          <div class="chart-wrapper" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: #f3f4f6; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--accent-green);"></i>
+              Hourly Availability / Uptime (%)
+            </h3>
+            <div class="chart-container" style="height: 350px;">
+              <canvas id="hourlyUptimeChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-wrapper" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: #f3f4f6; display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="zap" style="width: 16px; height: 16px; color: #3b82f6;"></i>
+              Hourly TTFT Latency (ms)
+            </h3>
+            <div class="chart-container" style="height: 350px;">
+              <canvas id="hourlyTtftChart"></canvas>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -794,6 +818,8 @@
     let tpotChart = null;
     let ttftChart = null;
     let reliabilityChart = null;
+    let hourlyUptimeChart = null;
+    let hourlyTtftChart = null;
     let isStaticMode = false;
     let statusIntervalId = null;
     let currentResults = [];
@@ -1511,8 +1537,241 @@
               title: { display: true, text: 'Success Rate (%)', color: '#9ca3af' }
             },
             y: {
-              grid: { display: false },
-              ticks: { color: '#f3f4f6', font: { weight: '600' } }
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      // Render the new hourly diurnal trend charts
+      renderHourlyCharts();
+    }
+
+    function calculateHourlyDiurnalData(history, selectedModelsList = []) {
+      const allModels = new Set();
+      history.forEach(run => {
+        if (run.results) {
+          run.results.forEach(r => allModels.add(r.model));
+        }
+      });
+
+      const modelStats = {};
+      allModels.forEach(model => {
+        modelStats[model] = Array.from({ length: 24 }, () => ({
+          totalRuns: 0,
+          successfulRuns: 0,
+          successRateSum: 0,
+          ttftSum: 0
+        }));
+      });
+
+      history.forEach(run => {
+        if (run.status !== 'completed' || !run.results) return;
+        
+        const date = new Date(run.timestamp);
+        const hour = date.getHours(); // 0 to 23
+        
+        run.results.forEach(r => {
+          const m = r.model;
+          if (!modelStats[m]) return;
+          
+          const stats = modelStats[m][hour];
+          stats.totalRuns++;
+          stats.successRateSum += (r.success_rate || 0);
+          
+          if (r.success_rate > 0) {
+            stats.successfulRuns++;
+            stats.ttftSum += (r.avg_ttft_ms || 0);
+          }
+        });
+      });
+
+      const result = {};
+      Object.keys(modelStats).forEach(model => {
+        if (selectedModelsList.length > 0 && !selectedModelsList.includes(model)) {
+          return;
+        }
+        
+        const hourlyUptime = [];
+        const hourlyTtft = [];
+        
+        for (let h = 0; h < 24; h++) {
+          const stats = modelStats[model][h];
+          if (stats.totalRuns > 0) {
+            hourlyUptime.push(Math.round((stats.successRateSum / stats.totalRuns) * 100));
+          } else {
+            hourlyUptime.push(null);
+          }
+          
+          if (stats.successfulRuns > 0) {
+            hourlyTtft.push(Math.round(stats.ttftSum / stats.successfulRuns));
+          } else {
+            hourlyTtft.push(null);
+          }
+        }
+        
+        result[model] = {
+          model: model,
+          hourlyUptime: hourlyUptime,
+          hourlyTtft: hourlyTtft
+        };
+      });
+      
+      return result;
+    }
+
+    function renderHourlyCharts() {
+      if (!fullHistory || fullHistory.length === 0) return;
+      
+      const diurnalData = calculateHourlyDiurnalData(fullHistory, selectedModels);
+      
+      const labels = Array.from({ length: 24 }, (_, i) => {
+        const ampm = i >= 12 ? 'PM' : 'AM';
+        const hour12 = i % 12 === 0 ? 12 : i % 12;
+        return `${hour12} ${ampm}`;
+      });
+      
+      const allModelsSorted = Object.keys(calculateHourlyDiurnalData(fullHistory, [])).sort();
+      
+      const colorPalette = [
+        '#76b900', // NVIDIA Green
+        '#3b82f6', // Blue
+        '#8b5cf6', // Purple
+        '#ec4899', // Pink
+        '#f59e0b', // Amber/Orange
+        '#10b981', // Emerald/Green
+        '#ef4444', // Red
+        '#06b6d4', // Cyan
+        '#84cc16', // Lime
+        '#a855f7'  // Violet
+      ];
+      
+      const uptimeDatasets = [];
+      const ttftDatasets = [];
+      
+      Object.keys(diurnalData).forEach(modelId => {
+        const data = diurnalData[modelId];
+        const modelIndex = allModelsSorted.indexOf(modelId);
+        const color = colorPalette[modelIndex % colorPalette.length];
+        const shortName = modelId.split('/').pop();
+        
+        uptimeDatasets.push({
+          label: shortName,
+          data: data.hourlyUptime,
+          borderColor: color,
+          backgroundColor: color + '15',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          tension: 0.3,
+          spanGaps: true,
+          fill: true
+        });
+        
+        ttftDatasets.push({
+          label: shortName,
+          data: data.hourlyTtft,
+          borderColor: color,
+          backgroundColor: color + '15',
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          tension: 0.3,
+          spanGaps: true,
+          fill: true
+        });
+      });
+      
+      if (hourlyUptimeChart) hourlyUptimeChart.destroy();
+      const ctxUptime = document.getElementById('hourlyUptimeChart').getContext('2d');
+      hourlyUptimeChart = new Chart(ctxUptime, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: uptimeDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true, 
+              position: 'bottom',
+              labels: { 
+                color: '#f3f4f6', 
+                font: { family: 'Inter', size: 10, weight: '500' },
+                padding: 15
+              }
+            },
+            tooltip: { 
+              backgroundColor: '#111726',
+              titleFont: { family: 'Inter', weight: '600' },
+              bodyFont: { family: 'Inter' },
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${context.raw}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af', font: { size: 10 } }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af', callback: value => value + '%' },
+              title: { display: true, text: 'Availability Rate (%)', color: '#9ca3af', font: { family: 'Inter', size: 11 } }
+            }
+          }
+        }
+      });
+      
+      if (hourlyTtftChart) hourlyTtftChart.destroy();
+      const ctxTtft = document.getElementById('hourlyTtftChart').getContext('2d');
+      hourlyTtftChart = new Chart(ctxTtft, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: ttftDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true, 
+              position: 'bottom',
+              labels: { 
+                color: '#f3f4f6', 
+                font: { family: 'Inter', size: 10, weight: '500' },
+                padding: 15
+              }
+            },
+            tooltip: { 
+              backgroundColor: '#111726',
+              titleFont: { family: 'Inter', weight: '600' },
+              bodyFont: { family: 'Inter' },
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${context.raw} ms`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af', font: { size: 10 } }
+            },
+            y: {
+              min: 0,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#9ca3af', callback: value => value + ' ms' },
+              title: { display: true, text: 'Latency (ms) (Lower is Better)', color: '#9ca3af', font: { family: 'Inter', size: 11 } }
             }
           }
         }
