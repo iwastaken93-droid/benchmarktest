@@ -17353,5 +17353,1453 @@
       }
     ],
     "status": "completed"
+  },
+  {
+    "timestamp": "2026-06-15T18:00:37.161781",
+    "results": [
+      {
+        "model": "google/diffusiongemma-26b-a4b-it",
+        "avg_ttft_ms": 934.1886043548584,
+        "avg_tps": 420.8121308896081,
+        "avg_tpot_ms": 2.94523701655954,
+        "avg_tokens": 1037.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 1057.0526123046875,
+            "tokens": 985,
+            "tps": 224.42676197673705,
+            "tpot_ms": 4.455796586788766
+          },
+          {
+            "success": true,
+            "ttft_ms": 897.1483707427979,
+            "tokens": 1142,
+            "tps": 339.08019237662387,
+            "tpot_ms": 2.9491548680297957
+          },
+          {
+            "success": true,
+            "ttft_ms": 848.3648300170898,
+            "tokens": 984,
+            "tps": 698.9294383154635,
+            "tpot_ms": 1.4307595948600575
+          }
+        ]
+      },
+      {
+        "model": "google/gemma-2-2b-it",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "HTTP Error 422"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 422"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 422"
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.1-8b-instruct",
+        "avg_ttft_ms": 315.53832689921063,
+        "avg_tps": 120.23561986266996,
+        "avg_tpot_ms": 8.322049374683466,
+        "avg_tokens": 4343.333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 356.34565353393555,
+            "tokens": 10000,
+            "tps": 120.76918535671163,
+            "tpot_ms": 8.28025789067249
+          },
+          {
+            "success": true,
+            "ttft_ms": 281.8176746368408,
+            "tokens": 1682,
+            "tps": 116.38454594481784,
+            "tpot_ms": 8.592206051773715
+          },
+          {
+            "success": true,
+            "ttft_ms": 308.45165252685547,
+            "tokens": 1348,
+            "tps": 123.55312828648039,
+            "tpot_ms": 8.093684181604194
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.2-1b-instruct",
+        "avg_ttft_ms": 323.82885615030926,
+        "avg_tps": 224.14638493872584,
+        "avg_tpot_ms": 4.4613774860124815,
+        "avg_tokens": 3621.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 304.99863624572754,
+            "tokens": 3882,
+            "tps": 224.44515498877223,
+            "tpot_ms": 4.45543143958721
+          },
+          {
+            "success": true,
+            "ttft_ms": 326.17902755737305,
+            "tokens": 3882,
+            "tps": 224.23412254758085,
+            "tpot_ms": 4.4596245595395825
+          },
+          {
+            "success": true,
+            "ttft_ms": 340.30890464782715,
+            "tokens": 3099,
+            "tps": 223.75987727982448,
+            "tpot_ms": 4.469076458910652
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-4-maverick-17b-128e-instruct",
+        "avg_ttft_ms": 289.64757919311523,
+        "avg_tps": 77.22703706174472,
+        "avg_tpot_ms": 12.997074725068169,
+        "avg_tokens": 1276.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 290.8623218536377,
+            "tokens": 1253,
+            "tps": 81.70106082568553,
+            "tpot_ms": 12.239743155031539
+          },
+          {
+            "success": true,
+            "ttft_ms": 289.19529914855957,
+            "tokens": 1439,
+            "tps": 70.8568154445678,
+            "tpot_ms": 14.112968438192269
+          },
+          {
+            "success": true,
+            "ttft_ms": 288.88511657714844,
+            "tokens": 1136,
+            "tps": 79.12323491498084,
+            "tpot_ms": 12.6385125819807
+          }
+        ]
+      },
+      {
+        "model": "mistralai/mistral-small-4-119b-2603",
+        "avg_ttft_ms": 304.84191576639813,
+        "avg_tps": 157.50047336463032,
+        "avg_tpot_ms": 7.01514502698321,
+        "avg_tokens": 1682.6666666666667,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 282.20295906066895,
+            "tokens": 1442,
+            "tps": 149.6857317188816,
+            "tpot_ms": 6.680663470838072
+          },
+          {
+            "success": true,
+            "ttft_ms": 375.00691413879395,
+            "tokens": 1692,
+            "tps": 101.57676218667056,
+            "tpot_ms": 9.844771367709782
+          },
+          {
+            "success": true,
+            "ttft_ms": 257.31587409973145,
+            "tokens": 1914,
+            "tps": 221.23892618833875,
+            "tpot_ms": 4.520000242401777
+          }
+        ]
+      },
+      {
+        "model": "mistralai/mistral-large-3-675b-instruct-2512",
+        "avg_ttft_ms": 311.1379146575928,
+        "avg_tps": 90.49657483352887,
+        "avg_tpot_ms": 11.404254578299884,
+        "avg_tokens": 1703.3333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 304.7680854797363,
+            "tokens": 1721,
+            "tps": 81.94984714977154,
+            "tpot_ms": 12.202585297961567
+          },
+          {
+            "success": true,
+            "ttft_ms": 316.1160945892334,
+            "tokens": 1918,
+            "tps": 114.00211103972542,
+            "tpot_ms": 8.771767389917349
+          },
+          {
+            "success": true,
+            "ttft_ms": 312.5295639038086,
+            "tokens": 1471,
+            "tps": 75.53776631108964,
+            "tpot_ms": 13.238411047020737
+          }
+        ]
+      },
+      {
+        "model": "microsoft/phi-4-multimodal-instruct",
+        "avg_ttft_ms": 1112.9257678985596,
+        "avg_tps": 90.17384387391668,
+        "avg_tpot_ms": 11.089690280900356,
+        "avg_tokens": 2462.0,
+        "success_rate": 0.3333333333333333,
+        "trials": [
+          {
+            "success": false,
+            "error": "HTTP Error 400: Function id '3afd112d-ad66-4d29-81b6-e7d6f8225e07': DEGRADED function cannot be invoked"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 500: Inference connection error while making inference request"
+          },
+          {
+            "success": true,
+            "ttft_ms": 1112.9257678985596,
+            "tokens": 2462,
+            "tps": 90.17384387391668,
+            "tpot_ms": 11.089690280900356
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-3-nano-30b-a3b",
+        "avg_ttft_ms": 310.47606468200684,
+        "avg_tps": 163.23861506022595,
+        "avg_tpot_ms": 6.396127129453327,
+        "avg_tokens": 2055.3333333333335,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 284.696102142334,
+            "tokens": 2060,
+            "tps": 132.6618420822009,
+            "tpot_ms": 7.537962569375244
+          },
+          {
+            "success": true,
+            "ttft_ms": 362.3766899108887,
+            "tokens": 2259,
+            "tps": 143.53300529631866,
+            "tpot_ms": 6.9670386816992815
+          },
+          {
+            "success": true,
+            "ttft_ms": 284.35540199279785,
+            "tokens": 1847,
+            "tps": 213.5209978021583,
+            "tpot_ms": 4.683380137285458
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-mini-4b-instruct",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "HTTP Error 400"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 400"
+          },
+          {
+            "success": false,
+            "error": "HTTP Error 400"
+          }
+        ]
+      },
+      {
+        "model": "mistralai/mistral-nemotron",
+        "avg_ttft_ms": 298.11517397562665,
+        "avg_tps": 38.41661917266125,
+        "avg_tpot_ms": 77.20314943781626,
+        "avg_tokens": 1040.3333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 295.50814628601074,
+            "tokens": 842,
+            "tps": 55.29803660057184,
+            "tpot_ms": 18.083824697487703
+          },
+          {
+            "success": true,
+            "ttft_ms": 300.1258373260498,
+            "tokens": 1592,
+            "tps": 54.831173951560515,
+            "tpot_ms": 18.23780028644708
+          },
+          {
+            "success": true,
+            "ttft_ms": 298.71153831481934,
+            "tokens": 687,
+            "tps": 5.120646965851399,
+            "tpot_ms": 195.28782332951403
+          }
+        ]
+      },
+      {
+        "model": "google/gemma-3n-e2b-it",
+        "avg_ttft_ms": 390.9637928009033,
+        "avg_tps": 21.052787322788554,
+        "avg_tpot_ms": 47.51188056520098,
+        "avg_tokens": 1485.3333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 381.03747367858887,
+            "tokens": 1572,
+            "tps": 21.482223139828527,
+            "tpot_ms": 46.55011697304165
+          },
+          {
+            "success": true,
+            "ttft_ms": 394.228458404541,
+            "tokens": 1427,
+            "tps": 21.02033715340414,
+            "tpot_ms": 47.57297624210823
+          },
+          {
+            "success": true,
+            "ttft_ms": 397.6254463195801,
+            "tokens": 1457,
+            "tps": 20.655801675133,
+            "tpot_ms": 48.41254848045307
+          }
+        ]
+      },
+      {
+        "model": "google/gemma-3n-e4b-it",
+        "avg_ttft_ms": 417.2530174255371,
+        "avg_tps": 17.681106467453464,
+        "avg_tpot_ms": 56.60831910807277,
+        "avg_tokens": 1551.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 452.04734802246094,
+            "tokens": 1643,
+            "tps": 17.37237875724716,
+            "tpot_ms": 57.562640901024245
+          },
+          {
+            "success": true,
+            "ttft_ms": 377.8040409088135,
+            "tokens": 1642,
+            "tps": 17.23742572909909,
+            "tpot_ms": 58.013302897767716
+          },
+          {
+            "success": true,
+            "ttft_ms": 421.9076633453369,
+            "tokens": 1368,
+            "tps": 18.43351491601415,
+            "tpot_ms": 54.24901352542634
+          }
+        ]
+      },
+      {
+        "model": "openai/gpt-oss-20b",
+        "avg_ttft_ms": 275.7273515065511,
+        "avg_tps": 212.8366648558439,
+        "avg_tpot_ms": 5.139364460735191,
+        "avg_tokens": 4503.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 290.1110649108887,
+            "tokens": 10000,
+            "tps": 221.39622093805596,
+            "tpot_ms": 4.516788930556264
+          },
+          {
+            "success": true,
+            "ttft_ms": 257.6000690460205,
+            "tokens": 1622,
+            "tps": 280.89799151377366,
+            "tpot_ms": 3.560011214786367
+          },
+          {
+            "success": true,
+            "ttft_ms": 279.47092056274414,
+            "tokens": 1887,
+            "tps": 136.2157821157021,
+            "tpot_ms": 7.341293236862943
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.2-11b-vision-instruct",
+        "avg_ttft_ms": 1541.7715708414714,
+        "avg_tps": 35.78263400188105,
+        "avg_tpot_ms": 33.26705182766195,
+        "avg_tokens": 1371.3333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 353.7418842315674,
+            "tokens": 1328,
+            "tps": 41.813522063985076,
+            "tpot_ms": 23.91570837945083
+          },
+          {
+            "success": true,
+            "ttft_ms": 337.10789680480957,
+            "tokens": 1488,
+            "tps": 47.26176098281074,
+            "tpot_ms": 21.15875454500528
+          },
+          {
+            "success": true,
+            "ttft_ms": 3934.464931488037,
+            "tokens": 1298,
+            "tps": 18.272618958847332,
+            "tpot_ms": 54.72669255852975
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-nano-12b-v2-vl",
+        "avg_ttft_ms": 278.7803014119466,
+        "avg_tps": 46.34035508156481,
+        "avg_tpot_ms": 21.585461233016193,
+        "avg_tokens": 1164.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 306.154727935791,
+            "tokens": 1331,
+            "tps": 46.83103844000198,
+            "tpot_ms": 21.353359509231453
+          },
+          {
+            "success": true,
+            "ttft_ms": 272.7701663970947,
+            "tokens": 1162,
+            "tps": 45.25590560203926,
+            "tpot_ms": 22.09656367930331
+          },
+          {
+            "success": true,
+            "ttft_ms": 257.4160099029541,
+            "tokens": 999,
+            "tps": 46.934121202653195,
+            "tpot_ms": 21.306460510513826
+          }
+        ]
+      },
+      {
+        "model": "openai/gpt-oss-120b",
+        "avg_ttft_ms": 375.00206629435223,
+        "avg_tps": 134.17150433488152,
+        "avg_tpot_ms": 7.473865132149197,
+        "avg_tokens": 2669.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 314.02087211608887,
+            "tokens": 2191,
+            "tps": 133.76251620021097,
+            "tpot_ms": 7.4759359229100895
+          },
+          {
+            "success": true,
+            "ttft_ms": 254.74905967712402,
+            "tokens": 2706,
+            "tps": 125.71771087014486,
+            "tpot_ms": 7.9543287344208045
+          },
+          {
+            "success": true,
+            "ttft_ms": 556.2362670898438,
+            "tokens": 3110,
+            "tps": 143.0342859342887,
+            "tpot_ms": 6.991330739116699
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+        "avg_ttft_ms": 477.45807965596515,
+        "avg_tps": 215.0942296708232,
+        "avg_tpot_ms": 4.666903847250286,
+        "avg_tokens": 7096.333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 849.8101234436035,
+            "tokens": 1289,
+            "tps": 200.83632433625291,
+            "tpot_ms": 4.9791789573171865
+          },
+          {
+            "success": true,
+            "ttft_ms": 291.26715660095215,
+            "tokens": 10000,
+            "tps": 233.08966676063872,
+            "tpot_ms": 4.290194472785902
+          },
+          {
+            "success": true,
+            "ttft_ms": 291.29695892333984,
+            "tokens": 10000,
+            "tps": 211.35669791557805,
+            "tpot_ms": 4.731338111647774
+          }
+        ]
+      },
+      {
+        "model": "minimaxai/minimax-m2.7",
+        "avg_ttft_ms": 788.7458801269531,
+        "avg_tps": 28.656339441783814,
+        "avg_tpot_ms": 35.63085774741615,
+        "avg_tokens": 3761.6666666666665,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 678.4794330596924,
+            "tokens": 4721,
+            "tps": 26.186185182978925,
+            "tpot_ms": 38.18807485750166
+          },
+          {
+            "success": true,
+            "ttft_ms": 759.901762008667,
+            "tokens": 2052,
+            "tps": 34.723849162150444,
+            "tpot_ms": 28.798650614172583
+          },
+          {
+            "success": true,
+            "ttft_ms": 927.8564453125,
+            "tokens": 4512,
+            "tps": 25.05898398022207,
+            "tpot_ms": 39.90584777057422
+          }
+        ]
+      },
+      {
+        "model": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
+        "avg_ttft_ms": 347.0601240793864,
+        "avg_tps": 30.805686438389,
+        "avg_tpot_ms": 35.42723651418945,
+        "avg_tokens": 2668.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 349.9932289123535,
+            "tokens": 2314,
+            "tps": 37.0794037085958,
+            "tpot_ms": 26.96914998576902
+          },
+          {
+            "success": true,
+            "ttft_ms": 350.7113456726074,
+            "tokens": 3499,
+            "tps": 19.43184668294005,
+            "tpot_ms": 51.461912823650344
+          },
+          {
+            "success": true,
+            "ttft_ms": 340.47579765319824,
+            "tokens": 2191,
+            "tps": 35.90580892363114,
+            "tpot_ms": 27.850646733149002
+          }
+        ]
+      },
+      {
+        "model": "mistralai/mixtral-8x7b-instruct-v0.1",
+        "avg_ttft_ms": 489.21481768290204,
+        "avg_tps": 12.461264896408712,
+        "avg_tpot_ms": 83.94555119603784,
+        "avg_tokens": 744.3333333333334,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 481.92644119262695,
+            "tokens": 964,
+            "tps": 14.56327042748925,
+            "tpot_ms": 68.66589513523185
+          },
+          {
+            "success": true,
+            "ttft_ms": 426.5024662017822,
+            "tokens": 633,
+            "tps": 13.77838703643251,
+            "tpot_ms": 72.57743575904942
+          },
+          {
+            "success": true,
+            "ttft_ms": 559.2155456542969,
+            "tokens": 636,
+            "tps": 9.042137225304375,
+            "tpot_ms": 110.59332269383228
+          }
+        ]
+      },
+      {
+        "model": "nvidia/ising-calibration-1-35b-a3b",
+        "avg_ttft_ms": 399.13137753804523,
+        "avg_tps": 149.67696691704808,
+        "avg_tpot_ms": 6.683155792124739,
+        "avg_tokens": 5175.666666666667,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 387.09521293640137,
+            "tokens": 2482,
+            "tps": 151.08076225740996,
+            "tpot_ms": 6.618976400822029
+          },
+          {
+            "success": true,
+            "ttft_ms": 408.3976745605469,
+            "tokens": 3045,
+            "tps": 151.96942467100112,
+            "tpot_ms": 6.580271012836311
+          },
+          {
+            "success": true,
+            "ttft_ms": 401.9012451171875,
+            "tokens": 10000,
+            "tps": 145.98071382273315,
+            "tpot_ms": 6.850219962715876
+          }
+        ]
+      },
+      {
+        "model": "mistralai/ministral-14b-instruct-2512",
+        "avg_ttft_ms": 542.5353844960531,
+        "avg_tps": 21.640513301706523,
+        "avg_tpot_ms": 61.0724400267926,
+        "avg_tokens": 2234.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 457.6544761657715,
+            "tokens": 1617,
+            "tps": 8.974923335622973,
+            "tpot_ms": 111.42156457546913
+          },
+          {
+            "success": true,
+            "ttft_ms": 802.837610244751,
+            "tokens": 2505,
+            "tps": 26.168004175623782,
+            "tpot_ms": 38.21460717021467
+          },
+          {
+            "success": true,
+            "ttft_ms": 367.1140670776367,
+            "tokens": 2580,
+            "tps": 29.778612393872823,
+            "tpot_ms": 33.581148334693985
+          }
+        ]
+      },
+      {
+        "model": "sarvamai/sarvam-m",
+        "avg_ttft_ms": 347.34360376993817,
+        "avg_tps": 32.52293558962848,
+        "avg_tpot_ms": 30.748220619502163,
+        "avg_tokens": 1302.3333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 348.1571674346924,
+            "tokens": 1606,
+            "tps": 32.30966001327517,
+            "tpot_ms": 30.950495907079393
+          },
+          {
+            "success": true,
+            "ttft_ms": 345.9470272064209,
+            "tokens": 1012,
+            "tps": 32.6659486965956,
+            "tpot_ms": 30.612917729348503
+          },
+          {
+            "success": true,
+            "ttft_ms": 347.9266166687012,
+            "tokens": 1289,
+            "tps": 32.59319805901469,
+            "tpot_ms": 30.681248222078597
+          }
+        ]
+      },
+      {
+        "model": "stockmark/stockmark-2-100b-instruct",
+        "avg_ttft_ms": 560.6930255889893,
+        "avg_tps": 13.489526619293706,
+        "avg_tpot_ms": 75.24077033714478,
+        "avg_tokens": 547.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 515.1450634002686,
+            "tokens": 590,
+            "tps": 15.84229742264104,
+            "tpot_ms": 63.12215793719721
+          },
+          {
+            "success": true,
+            "ttft_ms": 738.3713722229004,
+            "tokens": 511,
+            "tps": 11.91259444495348,
+            "tpot_ms": 83.94476993411195
+          },
+          {
+            "success": true,
+            "ttft_ms": 428.5626411437988,
+            "tokens": 540,
+            "tps": 12.713687990286594,
+            "tpot_ms": 78.65538314012517
+          }
+        ]
+      },
+      {
+        "model": "stepfun-ai/step-3.5-flash",
+        "avg_ttft_ms": 507.125457127889,
+        "avg_tps": 67.88784727110534,
+        "avg_tpot_ms": 14.768640808364,
+        "avg_tokens": 2705.6666666666665,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 898.4043598175049,
+            "tokens": 2553,
+            "tps": 63.153377143556824,
+            "tpot_ms": 15.834465949886646
+          },
+          {
+            "success": true,
+            "ttft_ms": 308.11548233032227,
+            "tokens": 2327,
+            "tps": 71.06299116001387,
+            "tpot_ms": 14.072022351948023
+          },
+          {
+            "success": true,
+            "ttft_ms": 314.85652923583984,
+            "tokens": 3237,
+            "tps": 69.44717350974537,
+            "tpot_ms": 14.399434123257329
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nvidia-nemotron-nano-9b-v2",
+        "avg_ttft_ms": 331.2376340230306,
+        "avg_tps": 49.28141305718157,
+        "avg_tpot_ms": 20.327518074548582,
+        "avg_tokens": 3236.6666666666665,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 321.32959365844727,
+            "tokens": 3211,
+            "tps": 48.44474440232534,
+            "tpot_ms": 20.64207402345176
+          },
+          {
+            "success": true,
+            "ttft_ms": 385.5443000793457,
+            "tokens": 3552,
+            "tps": 52.159669654931236,
+            "tpot_ms": 19.17190056255387
+          },
+          {
+            "success": true,
+            "ttft_ms": 286.8390083312988,
+            "tokens": 2947,
+            "tps": 47.23982511428813,
+            "tpot_ms": 21.16857963764012
+          }
+        ]
+      },
+      {
+        "model": "mistralai/mistral-medium-3.5-128b",
+        "avg_ttft_ms": 18087.033828099567,
+        "avg_tps": 22.04277850156484,
+        "avg_tpot_ms": 63.6127927553799,
+        "avg_tokens": 1569.3333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 51012.69817352295,
+            "tokens": 1677,
+            "tps": 41.2706003299615,
+            "tpot_ms": 24.230323571862925
+          },
+          {
+            "success": true,
+            "ttft_ms": 264.64009284973145,
+            "tokens": 1556,
+            "tps": 10.131506185225295,
+            "tpot_ms": 98.70200755128523
+          },
+          {
+            "success": true,
+            "ttft_ms": 2983.7632179260254,
+            "tokens": 1475,
+            "tps": 14.726228989507721,
+            "tpot_ms": 67.90604714299154
+          }
+        ]
+      },
+      {
+        "model": "qwen/qwen3.5-122b-a10b",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          }
+        ]
+      },
+      {
+        "model": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+        "avg_ttft_ms": 671.6073354085287,
+        "avg_tps": 18.795588824355065,
+        "avg_tpot_ms": 58.748466282235,
+        "avg_tokens": 2092.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 1309.3743324279785,
+            "tokens": 1763,
+            "tps": 11.485540372684245,
+            "tpot_ms": 87.06599494249947
+          },
+          {
+            "success": true,
+            "ttft_ms": 399.80363845825195,
+            "tokens": 2395,
+            "tps": 23.183277067915046,
+            "tpot_ms": 43.13454034434026
+          },
+          {
+            "success": true,
+            "ttft_ms": 305.64403533935547,
+            "tokens": 2118,
+            "tps": 21.7179490324659,
+            "tpot_ms": 46.044863559865256
+          }
+        ]
+      },
+      {
+        "model": "stepfun-ai/step-3.7-flash",
+        "avg_ttft_ms": 347.23567962646484,
+        "avg_tps": 124.45144392173914,
+        "avg_tpot_ms": 8.158285084367392,
+        "avg_tokens": 7351.333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 343.66703033447266,
+            "tokens": 6314,
+            "tps": 109.03896133609858,
+            "tpot_ms": 9.17103380063965
+          },
+          {
+            "success": true,
+            "ttft_ms": 313.72833251953125,
+            "tokens": 7467,
+            "tps": 146.10233112979267,
+            "tpot_ms": 6.8445177586634935
+          },
+          {
+            "success": true,
+            "ttft_ms": 384.3116760253906,
+            "tokens": 8273,
+            "tps": 118.21303929932617,
+            "tpot_ms": 8.459303693799031
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "avg_ttft_ms": 8129.844427108765,
+        "avg_tps": 19.578101069338572,
+        "avg_tpot_ms": 53.27159706347741,
+        "avg_tokens": 2637.3333333333335,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 9764.55020904541,
+            "tokens": 2635,
+            "tps": 14.63292623363255,
+            "tpot_ms": 68.3390310341061
+          },
+          {
+            "success": true,
+            "ttft_ms": 9772.216796875,
+            "tokens": 2795,
+            "tps": 20.020200383306793,
+            "tpot_ms": 49.94954999720274
+          },
+          {
+            "success": true,
+            "ttft_ms": 4852.766275405884,
+            "tokens": 2482,
+            "tps": 24.081176591076368,
+            "tpot_ms": 41.5262101591234
+          }
+        ]
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-flash",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.2-90b-vision-instruct",
+        "avg_ttft_ms": 15718.198617299398,
+        "avg_tps": 7.023235185282093,
+        "avg_tpot_ms": 142.49508114484172,
+        "avg_tokens": 1206.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 42363.58642578125,
+            "tokens": 1256,
+            "tps": 6.924248833036477,
+            "tpot_ms": 144.41999762181743
+          },
+          {
+            "success": true,
+            "ttft_ms": 1037.7955436706543,
+            "tokens": 1315,
+            "tps": 7.298696563824533,
+            "tpot_ms": 137.0107650393946
+          },
+          {
+            "success": true,
+            "ttft_ms": 3753.213882446289,
+            "tokens": 1047,
+            "tps": 6.846760158985268,
+            "tpot_ms": 146.0544807733131
+          }
+        ]
+      },
+      {
+        "model": "bytedance/seed-oss-36b-instruct",
+        "avg_ttft_ms": 3881.49364789327,
+        "avg_tps": 10.66983374409286,
+        "avg_tpot_ms": 95.43742764889164,
+        "avg_tokens": 1922.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 679.9969673156738,
+            "tokens": 2052,
+            "tps": 11.392612269969291,
+            "tpot_ms": 87.77618129215027
+          },
+          {
+            "success": true,
+            "ttft_ms": 567.6989555358887,
+            "tokens": 2137,
+            "tps": 11.863916628707969,
+            "tpot_ms": 84.2891965019569
+          },
+          {
+            "success": true,
+            "ttft_ms": 10396.785020828247,
+            "tokens": 1577,
+            "tps": 8.752972333601324,
+            "tpot_ms": 114.24690515256775
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.3-70b-instruct",
+        "avg_ttft_ms": 1582.9427242279053,
+        "avg_tps": 10.006275353802573,
+        "avg_tpot_ms": 102.27192682665357,
+        "avg_tokens": 1635.6666666666667,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 766.4532661437988,
+            "tokens": 1598,
+            "tps": 11.22947281376861,
+            "tpot_ms": 89.05137548165987
+          },
+          {
+            "success": true,
+            "ttft_ms": 497.236967086792,
+            "tokens": 1960,
+            "tps": 10.800737840487658,
+            "tpot_ms": 92.58626723179955
+          },
+          {
+            "success": true,
+            "ttft_ms": 3485.137939453125,
+            "tokens": 1349,
+            "tps": 7.988615407151456,
+            "tpot_ms": 125.17813776650132
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.1-70b-instruct",
+        "avg_ttft_ms": 3979.149421056112,
+        "avg_tps": 5.6455335152692365,
+        "avg_tpot_ms": 196.71261889788062,
+        "avg_tokens": 943.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 746.7162609100342,
+            "tokens": 750,
+            "tps": 4.160481678039784,
+            "tpot_ms": 240.35678495552256
+          },
+          {
+            "success": true,
+            "ttft_ms": 10685.54663658142,
+            "tokens": 1275,
+            "tps": 8.45717982302497,
+            "tpot_ms": 118.24272640833114
+          },
+          {
+            "success": true,
+            "ttft_ms": 505.1853656768799,
+            "tokens": 804,
+            "tps": 4.318939044742955,
+            "tpot_ms": 231.53834532978823
+          }
+        ]
+      },
+      {
+        "model": "z-ai/glm-5.1",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          }
+        ]
+      },
+      {
+        "model": "qwen/qwen3.5-397b-a17b",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          }
+        ]
+      },
+      {
+        "model": "moonshotai/kimi-k2.6",
+        "avg_ttft_ms": 858.2031726837158,
+        "avg_tps": 30.565321608912864,
+        "avg_tpot_ms": 32.789100184516265,
+        "avg_tokens": 3378.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 488.72876167297363,
+            "tokens": 1817,
+            "tps": 29.25074816144898,
+            "tpot_ms": 34.187159743077956
+          },
+          {
+            "success": true,
+            "ttft_ms": 1393.829107284546,
+            "tokens": 2954,
+            "tps": 29.85024773904934,
+            "tpot_ms": 33.500559484195676
+          },
+          {
+            "success": true,
+            "ttft_ms": 692.0516490936279,
+            "tokens": 5363,
+            "tps": 32.59496892624026,
+            "tpot_ms": 30.679581326275162
+          }
+        ]
+      },
+      {
+        "model": "abacusai/dracarys-llama-3.1-70b-instruct",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          }
+        ]
+      },
+      {
+        "model": "nvidia/llama-3.3-nemotron-super-49b-v1",
+        "avg_ttft_ms": 4295.904715855916,
+        "avg_tps": 12.260295143212987,
+        "avg_tpot_ms": 92.68643837684385,
+        "avg_tokens": 1459.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 7354.306936264038,
+            "tokens": 1629,
+            "tps": 19.00166997982452,
+            "tpot_ms": 52.62695337103391
+          },
+          {
+            "success": true,
+            "ttft_ms": 470.16453742980957,
+            "tokens": 1307,
+            "tps": 9.287026857366412,
+            "tpot_ms": 107.6770871193084
+          },
+          {
+            "success": true,
+            "ttft_ms": 5063.242673873901,
+            "tokens": 1441,
+            "tps": 8.492188592448029,
+            "tpot_ms": 117.75527464018927
+          }
+        ]
+      },
+      {
+        "model": "nvidia/nemotron-3-super-120b-a12b",
+        "avg_ttft_ms": 1806.9961865743,
+        "avg_tps": 28.145650972125733,
+        "avg_tpot_ms": 36.13191949485085,
+        "avg_tokens": 4138.333333333333,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 352.08868980407715,
+            "tokens": 2833,
+            "tps": 31.217825389972194,
+            "tpot_ms": 32.032980757244566
+          },
+          {
+            "success": true,
+            "ttft_ms": 4358.802318572998,
+            "tokens": 4190,
+            "tps": 23.271315535245378,
+            "tpot_ms": 42.971356668060224
+          },
+          {
+            "success": true,
+            "ttft_ms": 710.0975513458252,
+            "tokens": 5392,
+            "tps": 29.947811991159625,
+            "tpot_ms": 33.391421059247754
+          }
+        ]
+      },
+      {
+        "model": "qwen/qwen3-next-80b-a3b-instruct",
+        "avg_ttft_ms": 558.2308769226074,
+        "avg_tps": 17.97613740036107,
+        "avg_tpot_ms": 3595.470207634163,
+        "avg_tokens": 777.0,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 946.4921951293945,
+            "tokens": 1208,
+            "tps": 47.705421766810524,
+            "tpot_ms": 20.961977967370515
+          },
+          {
+            "success": true,
+            "ttft_ms": 406.6283702850342,
+            "tokens": 1105,
+            "tps": 6.128671109289348,
+            "tpot_ms": 163.1675092638403
+          },
+          {
+            "success": true,
+            "ttft_ms": 321.57206535339355,
+            "tokens": 18,
+            "tps": 0.0943193249833292,
+            "tpot_ms": 10602.28113567128
+          }
+        ]
+      },
+      {
+        "model": "google/gemma-4-31b-it",
+        "avg_ttft_ms": 72100.20565986633,
+        "avg_tps": 28.251088468967946,
+        "avg_tpot_ms": 35.39686625166451,
+        "avg_tokens": 1379.0,
+        "success_rate": 0.3333333333333333,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 72100.20565986633,
+            "tokens": 1379,
+            "tps": 28.251088468967946,
+            "tpot_ms": 35.39686625166451
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          }
+        ]
+      },
+      {
+        "model": "microsoft/phi-4-mini-instruct",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          }
+        ]
+      },
+      {
+        "model": "nvidia/llama-3.1-nemotron-nano-8b-v1",
+        "avg_ttft_ms": 144632.2729587555,
+        "avg_tps": 18.80373224730909,
+        "avg_tpot_ms": 53.18093168142751,
+        "avg_tokens": 1811.0,
+        "success_rate": 0.3333333333333333,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 144632.2729587555,
+            "tokens": 1811,
+            "tps": 18.80373224730909,
+            "tpot_ms": 53.18093168142751
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          }
+        ]
+      },
+      {
+        "model": "meta/llama-3.2-3b-instruct",
+        "avg_ttft_ms": 35263.31408818563,
+        "avg_tps": 37.63973650049723,
+        "avg_tpot_ms": 919.234112208413,
+        "avg_tokens": 2106.6666666666665,
+        "success_rate": 1.0,
+        "trials": [
+          {
+            "success": true,
+            "ttft_ms": 90058.16650390625,
+            "tokens": 71,
+            "tps": 0.38363287743886676,
+            "tpot_ms": 2606.6587584359304
+          },
+          {
+            "success": true,
+            "ttft_ms": 15064.538478851318,
+            "tokens": 4975,
+            "tps": 105.4715514062606,
+            "tpot_ms": 9.481229645974866
+          },
+          {
+            "success": true,
+            "ttft_ms": 667.2372817993164,
+            "tokens": 1274,
+            "tps": 7.064025217792227,
+            "tpot_ms": 141.56234854333343
+          }
+        ]
+      },
+      {
+        "model": "minimaxai/minimax-m3",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          }
+        ]
+      },
+      {
+        "model": "deepseek-ai/deepseek-v4-pro",
+        "avg_ttft_ms": 0.0,
+        "avg_tps": 0.0,
+        "avg_tpot_ms": 0.0,
+        "avg_tokens": 0.0,
+        "success_rate": 0.0,
+        "trials": [
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "The read operation timed out"
+          },
+          {
+            "success": false,
+            "error": "Empty response or stream error"
+          }
+        ]
+      }
+    ],
+    "status": "completed"
   }
 ]
