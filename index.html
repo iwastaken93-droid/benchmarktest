@@ -721,9 +721,6 @@
                   <th onclick="handleSort('ttft')" class="sortable" style="position: relative; padding-right: 20px;">
                     Avg TTFT (ms) <span id="sort-icon-ttft" class="sort-icon"></span>
                   </th>
-                  <th onclick="handleSort('latency')" class="sortable" style="position: relative; padding-right: 20px;">
-                    Total Latency (s) <span id="sort-icon-latency" class="sort-icon"></span>
-                  </th>
                   <th onclick="handleSort('reliability')" class="sortable" style="position: relative; padding-right: 20px;">
                     Reliability <span id="sort-icon-reliability" class="sort-icon"></span>
                   </th>
@@ -731,7 +728,7 @@
               </thead>
               <tbody id="table-body">
                 <tr>
-                  <td colspan="7" class="empty-state">
+                  <td colspan="6" class="empty-state">
                     <i data-lucide="loader-2" class="pulse-dot" style="animation: spin 1.5s linear infinite; margin: 0 auto; width: 24px; height: 24px; display: block;"></i>
                     Loading benchmark metrics...
                   </td>
@@ -1275,10 +1272,7 @@
         tdTTFT.innerText = r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'N/A';
         tr.appendChild(tdTTFT);
         
-        // Latency cell
-        const tdLatency = document.createElement('td');
-        tdLatency.innerText = r.avg_latency_ms > 0 ? `${(r.avg_latency_ms / 1000.0).toFixed(2)} s` : 'N/A';
-        tr.appendChild(tdLatency);
+
         
         // Reliability cell
         const tdReliability = document.createElement('td');
@@ -1297,7 +1291,7 @@
       if (failed.length > 0) {
           const toggleRow = document.createElement('tr');
           const tdToggle = document.createElement('td');
-          tdToggle.setAttribute('colspan', '7');
+          tdToggle.setAttribute('colspan', '6');
           tdToggle.style.textAlign = 'center';
           tdToggle.style.padding = '12px 0';
           tdToggle.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
@@ -1529,7 +1523,7 @@
       const tbody = document.getElementById('table-body');
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" class="empty-state">
+          <td colspan="6" class="empty-state">
             <i data-lucide="alert-circle"></i>
             No benchmark data available. Click "Trigger Benchmark" to run the first evaluation.
           </td>

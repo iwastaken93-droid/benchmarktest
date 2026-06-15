@@ -164,16 +164,13 @@ def run_mock_trial(model_id):
     # Simulate generating a 1000-word story (around 400-800 tokens)
     tokens = random.randint(300, 750)
     tps = random.uniform(40, 85) if not is_reasoning else random.uniform(15, 32)
-    latency = ttft + (tokens / tps) * 1000.0
-    
     # 95% success rate for mock trials
     success = random.random() < 0.95
     if success:
-        tpot = (latency - ttft) / (tokens - 1) if tokens > 1 else 0.0
+        tpot = 1000.0 / tps if tps > 0 else 0.0
         return {
             "success": True,
             "ttft_ms": ttft,
-            "latency_ms": latency,
             "tokens": tokens,
             "tps": tps,
             "tpot_ms": tpot
@@ -209,8 +206,8 @@ def run_trial(model_id, api_key, prompt, max_tokens):
             
         last_res = res
         err_msg = res.get("error", "")
-        # If it's a structural failure (404, 401, 403), do not retry
-        if any(h in err_msg for h in ["HTTP Error 404", "HTTP Error 401", "HTTP Error 403"]):
+        # If it's a structural failure (404, 401, 403) or a timeout/connection error, do not retry
+        if any(h in err_msg.lower() for h in ["404", "401", "403", "timed out", "timeout", "10060", "connection", "host", "refused", "reset"]):
             return res
             
         # Wait 2 seconds before retrying transient issues (e.g. timeouts, 503s, empty responses, or 429s)
@@ -241,15 +238,35 @@ def _run_trial_internal(model_id, api_key, prompt, max_tokens, url, use_stream_o
     actual_token_count = None
     
     try:
-        with urllib.request.urlopen(req, timeout=420) as response:
+        with urllib.request.urlopen(req, timeout=60) as response:
             if response.status != 200:
                 return {"success": False, "error": f"HTTP status {response.status}"}
                 
             first_chunk = True
+            first_token_time = None
             for line in response:
+                # Absolute timeout check to prevent thread hangs on silent/slow startup streams
+                if (time.time() - start_time) > 240.0:
+                    print(f"[Benchmark] {model_id} exceeded absolute 240-second timeout limit. Stopping stream.")
+                    try:
+                        response.close()
+                    except Exception:
+                        pass
+                    break
+                    
                 if first_chunk:
-                    ttft = (time.time() - start_time) * 1000.0
+                    first_token_time = time.time()
+                    ttft = (first_token_time - start_time) * 1000.0
                     first_chunk = False
+                
+                if not first_chunk and first_token_time is not None:
+                    if (time.time() - first_token_time) > 180.0:
+                        print(f"[Benchmark] {model_id} exceeded 3-minute limit after first token. Stopping stream early.")
+                        try:
+                            response.close()
+                        except Exception:
+                            pass
+                        break
                     
                 line_str = line.decode('utf-8', errors='ignore').strip()
                 if line_str.startswith("data:"):
@@ -295,7 +312,9 @@ def _run_trial_internal(model_id, api_key, prompt, max_tokens, url, use_stream_o
                     token_count = 1
 
             # Reject safety / guardrail models that generate very short responses
-            if token_count < 100:
+            # But do NOT reject if we had to cut the stream off early due to the 1-minute limit
+            is_cut_off = not first_chunk and first_token_time is not None and (time.time() - first_token_time) > 60.0
+            if token_count < 100 and not is_cut_off:
                 return {"success": False, "error": f"Generated too few tokens ({token_count} < 100)"}
                 
             latency_delta_s = (total_time - ttft) / 1000.0
@@ -309,7 +328,6 @@ def _run_trial_internal(model_id, api_key, prompt, max_tokens, url, use_stream_o
             return {
                 "success": True,
                 "ttft_ms": ttft,
-                "latency_ms": total_time,
                 "tokens": token_count,
                 "tps": tps,
                 "tpot_ms": tpot
@@ -406,16 +424,13 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                 trials = active_run_results[model_id]
                 success_trials = [t for t in trials if t.get("success", False)]
                 success_rate = len(success_trials) / 3.0
-                
                 if success_trials:
                     avg_ttft = sum(t["ttft_ms"] for t in success_trials) / len(success_trials)
-                    avg_latency = sum(t["latency_ms"] for t in success_trials) / len(success_trials)
                     avg_tps = sum(t["tps"] for t in success_trials) / len(success_trials)
                     avg_tokens = sum(t["tokens"] for t in success_trials) / len(success_trials)
                     avg_tpot = sum(t.get("tpot_ms", 0.0) for t in success_trials) / len(success_trials)
                 else:
                     avg_ttft = 0.0
-                    avg_latency = 0.0
                     avg_tps = 0.0
                     avg_tokens = 0.0
                     avg_tpot = 0.0
@@ -431,7 +446,6 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                     model_summary = {
                         "model": model_id,
                         "avg_ttft_ms": avg_ttft,
-                        "avg_latency_ms": avg_latency,
                         "avg_tps": avg_tps,
                         "avg_tpot_ms": avg_tpot,
                         "avg_tokens": avg_tokens,
