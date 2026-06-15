@@ -238,7 +238,7 @@ def _run_trial_internal(model_id, api_key, prompt, max_tokens, url, use_stream_o
     actual_token_count = None
     
     try:
-        with urllib.request.urlopen(req, timeout=60) as response:
+        with urllib.request.urlopen(req, timeout=180) as response:
             if response.status != 200:
                 return {"success": False, "error": f"HTTP status {response.status}"}
                 
@@ -246,8 +246,8 @@ def _run_trial_internal(model_id, api_key, prompt, max_tokens, url, use_stream_o
             first_token_time = None
             for line in response:
                 # Absolute timeout check to prevent thread hangs on silent/slow startup streams
-                if (time.time() - start_time) > 240.0:
-                    print(f"[Benchmark] {model_id} exceeded absolute 240-second timeout limit. Stopping stream.")
+                if (time.time() - start_time) > 360.0:
+                    print(f"[Benchmark] {model_id} exceeded absolute 360-second timeout limit. Stopping stream.")
                     try:
                         response.close()
                     except Exception:
