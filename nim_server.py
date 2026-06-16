@@ -456,6 +456,13 @@ CONVERSATION_TURNS_POOL = [
     }
 ]
 
+FINAL_QUERIES_POOL = [
+    "Write a 1000-word story about a speed unicorn. MAKE IT SPEED UNICORN SPEEED",
+    "Implement a high-performance, lock-free queue in C++ that supports multiple producers and multiple consumers (MPMC). Explain the memory ordering guarantees used.",
+    "Explain the architectural differences between OAuth2 authorization code flow and client credentials flow. Then implement a secure token-exchange controller in Go.",
+    "Write a comprehensive technical developer guide (in Markdown format) explaining how to build, deploy, and monitor high-throughput streaming applications using Apache Kafka and Python."
+]
+
 def generate_random_messages():
     system_prompt = random.choice(SYSTEM_PROMPTS_POOL)
     messages = [{"role": "system", "content": system_prompt}]
@@ -469,7 +476,7 @@ def generate_random_messages():
         messages.append({"role": "user", "content": turn["user"]})
         messages.append({"role": "assistant", "content": turn["assistant"]})
         
-    final_query = "Write a 1000-word story about a speed unicorn. MAKE IT SPEED UNICORN SPEEED"
+    final_query = random.choice(FINAL_QUERIES_POOL)
     messages.append({"role": "user", "content": final_query})
     
     # Log details about the generated context
