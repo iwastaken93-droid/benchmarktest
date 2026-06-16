@@ -34,19 +34,25 @@ export default {
       });
     }
 
-    // Endpoint: GET /benchmark_results.json (or /public/benchmark_results.json)
-    // Fetch directly from GitHub to bypass Cloudflare Pages deployment delay
-    if ((url.pathname === '/benchmark_results.json' || url.pathname === '/public/benchmark_results.json') && request.method === 'GET') {
+    // Endpoint: GET .../benchmark_results.json
+    // Fetch directly from GitHub API with authentication to bypass Cloudflare Pages deployment delay (works for public and private repos)
+    if (url.pathname.endsWith('/benchmark_results.json') && request.method === 'GET') {
       try {
         const repo = env.GITHUB_REPO || 'iwastaken93-droid/benchmarktest';
         const ref = env.GITHUB_REF || 'master';
-        const rawUrl = `https://raw.githubusercontent.com/${repo}/${ref}/public/benchmark_results.json?t=${Date.now()}`;
+        const githubUrl = `https://api.github.com/repos/${repo}/contents/public/benchmark_results.json?ref=${ref}&t=${Date.now()}`;
         
-        const response = await fetch(rawUrl, {
-          headers: {
-            'User-Agent': 'cloudflare-worker-results-proxy'
-          }
-        });
+        const headers = {
+          'Accept': 'application/vnd.github.v3.raw',
+          'User-Agent': 'cloudflare-worker-results-proxy',
+          'X-GitHub-Api-Version': '2022-11-28'
+        };
+        
+        if (env.GITHUB_TOKEN) {
+          headers['Authorization'] = `Bearer ${env.GITHUB_TOKEN}`;
+        }
+        
+        const response = await fetch(githubUrl, { headers });
         
         if (response.ok) {
           const data = await response.json();
@@ -56,10 +62,12 @@ export default {
               'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
             }
           });
+        } else {
+          console.error(`GitHub API returned non-ok status: ${response.status}`);
         }
       } catch (e) {
-        // Fallback to static asset serving if github fetch fails
-        console.error("Failed to fetch live results from GitHub, falling back to static asset:", e);
+        // Fallback to static asset serving if github API fetch fails
+        console.error("Failed to fetch live results from GitHub API, falling back to static asset:", e);
       }
     }
 
