@@ -16,6 +16,10 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Install dependencies
+        run: |
+          pip install tiktoken
+
       - name: Run Evaluator
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
