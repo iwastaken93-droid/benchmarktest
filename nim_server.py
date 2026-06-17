@@ -8,6 +8,27 @@ import random
 from datetime import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
+try:
+    import tiktoken
+    tokenizer_encoder = tiktoken.get_encoding("cl100k_base")
+except ImportError:
+    tokenizer_encoder = None
+
+def count_completion_tokens(text):
+    if tokenizer_encoder:
+        try:
+            return len(tokenizer_encoder.encode(text))
+        except Exception:
+            pass
+    # Fallback to statistical estimator
+    word_count = len(text.split())
+    char_count = len(text)
+    if word_count > 0:
+        val = int(word_count * 1.33)
+    else:
+        val = int(char_count / 4)
+    return max(1, val)
+
 # Resolve paths relative to this script
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML_PATH = os.path.join(SCRIPT_DIR, "public", "index.html")
@@ -314,14 +335,7 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
             if actual_token_count is not None and actual_token_count > 0:
                 token_count = actual_token_count
             else:
-                word_count = len(generated_text.split())
-                char_count = len(generated_text)
-                if word_count > 0:
-                    token_count = int(word_count * 1.33)
-                else:
-                    token_count = int(char_count / 4)
-                if token_count == 0:
-                    token_count = 1
+                token_count = count_completion_tokens(generated_text)
 
             # Reject safety / guardrail models that generate very short responses
             # But do NOT reject if we had to cut the stream off early due to the 1-minute limit
