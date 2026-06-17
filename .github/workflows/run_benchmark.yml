@@ -24,7 +24,7 @@ jobs:
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
-          python -u nim_server.py --run-once
+          python -u test_models.py
 
       - name: Commit and Push Results
         run: |
