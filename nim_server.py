@@ -5,8 +5,16 @@ import urllib.error
 import os
 import threading
 import random
+import sys
 from datetime import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+
+# Reconfigure stdout to use UTF-8, avoiding CP1252/UnicodeEncodeError on Windows
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 try:
     import tiktoken
@@ -358,7 +366,9 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url):
                 "ttft_ms": ttft,
                 "tokens": token_count,
                 "tps": tps,
-                "tpot_ms": tpot
+                "tpot_ms": tpot,
+                "total_time_ms": total_time,
+                "text": generated_text
             }
     except urllib.error.HTTPError as e:
         error_msg = f"HTTP Error {e.code}"
@@ -519,6 +529,13 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                             break
                             
                 if not is_filtered_guardrail:
+                    # Clean trials for JSON results storage to keep file size lightweight (excluding text)
+                    json_trials = []
+                    for t in trials:
+                        cleaned = dict(t)
+                        cleaned.pop("text", None)
+                        json_trials.append(cleaned)
+                        
                     model_summary = {
                         "model": model_id,
                         "avg_ttft_ms": avg_ttft,
@@ -526,7 +543,7 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
                         "avg_tpot_ms": avg_tpot,
                         "avg_tokens": avg_tokens,
                         "success_rate": success_rate,
-                        "trials": trials
+                        "trials": json_trials
                     }
                     save_incremental_model_result(model_summary)
                 else:
@@ -620,6 +637,32 @@ def run_benchmark_suite():
             if not running_state:
                 break
             time.sleep(1.0)
+            
+        # Print results at the end
+        print("\n==================================================")
+        print("ALL BENCHMARK TRIALS COMPLETED. PRINTING RESULTS:")
+        print("==================================================")
+        
+        for model_id in sorted(models_to_test):
+            print(f"\n##################################################")
+            print(f"MODEL: {model_id}")
+            print(f"##################################################")
+            
+            trials = active_run_results.get(model_id, [])
+            for trial_idx, trial in enumerate(trials):
+                print(f"\n--- TRIAL {trial_idx + 1} ---")
+                if trial.get("success"):
+                    print(f"Success: True")
+                    print(f"TTFT: {trial['ttft_ms']:.2f} ms")
+                    print(f"TPS: {trial['tps']:.2f} tokens/sec")
+                    print(f"Tokens: {trial['tokens']}")
+                    print(f"Total Time: {trial.get('total_time_ms', 0.0):.2f} ms")
+                    if "text" in trial:
+                        print(f"\n--- Response Text ---")
+                        print(trial["text"])
+                else:
+                    print(f"Success: False")
+                    print(f"Error: {trial.get('error')}")
             
     except Exception as e:
         print(f"[Benchmark] Error in benchmark suite: {e}")
