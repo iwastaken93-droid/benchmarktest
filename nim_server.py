@@ -226,6 +226,8 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
     payload = {
         "model": model_id,
         "messages": messages,
+        "temperature": 0.7,
+        "top_p": 0.7,
         "max_tokens": max_tokens,
         "stream": True
     }
@@ -236,6 +238,10 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
     req = urllib.request.Request(url, data=req_data, method='POST')
     req.add_header('Content-Type', 'application/json')
     req.add_header('Authorization', f"Bearer {api_key}")
+    req.add_header('Accept', '*/*')
+    req.add_header('Cache-Control', 'no-cache')
+    req.add_header('Connection', 'keep-alive')
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     
     start_time = time.time()
     ttft = 0.0
