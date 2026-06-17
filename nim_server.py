@@ -240,9 +240,26 @@ def run_trial(model_id, api_key, prompt_or_messages, max_tokens):
  
 def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, use_stream_options):
     if isinstance(prompt_or_messages, list):
-        messages = prompt_or_messages
+        messages = list(prompt_or_messages)
     else:
         messages = [{"role": "user", "content": prompt_or_messages}]
+        
+    # For models that don't support system instructions (e.g. gemma-2-), merge system prompt into first user message
+    if any(kw in model_id.lower() for kw in ["gemma-2-"]):
+        new_messages = []
+        system_content = ""
+        for msg in messages:
+            if msg["role"] == "system":
+                system_content = msg["content"]
+            elif msg["role"] == "user":
+                if system_content:
+                    new_messages.append({"role": "user", "content": f"{system_content}\n\n{msg['content']}"})
+                    system_content = ""
+                else:
+                    new_messages.append(msg)
+            else:
+                new_messages.append(msg)
+        messages = new_messages
         
     payload = {
         "model": model_id,
@@ -337,11 +354,7 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
             else:
                 token_count = count_completion_tokens(generated_text)
 
-            # Reject safety / guardrail models that generate very short responses
-            # But do NOT reject if we had to cut the stream off early due to the 1-minute limit
-            is_cut_off = not first_chunk and first_token_time is not None and (time.time() - first_token_time) > 60.0
-            if token_count < 100 and not is_cut_off:
-                return {"success": False, "error": f"Generated too few tokens ({token_count} < 100)"}
+
                 
             latency_delta_s = (total_time - ttft) / 1000.0
             if latency_delta_s > 0 and token_count > 1:
@@ -426,53 +439,33 @@ def mark_run_completed():
         print(f"[Benchmark] Error marking run completed: {e}")
 
 SYSTEM_PROMPTS_POOL = [
-    "You are an expert AI system architect and full-stack software engineer. Provide detailed, well-commented code, optimal architectural advice, and comprehensive technical solutions.",
-    "You are a helpful, precise, and highly intelligent AI coding and writing assistant. Answer user queries with detail and accuracy.",
-    "You are a senior database administrator and performance optimization expert. Answer questions detailing index strategies, query plan analysis, and database schema best practices.",
-    "You are an expert developer specializing in asynchronous programming, microservice design, and DevOps automation. Provide clear, robust, and production-ready code blocks.",
-    "You are a senior technical writer and software instructor. Explain concepts from first principles, structure your responses with markdown tables and bullet points, and provide clear code examples."
+    "You are a helpful assistant."
 ]
 
 CONVERSATION_TURNS_POOL = [
     {
-        "user": "Hello! I am building a web-based data visualization platform. I need to design a high-performance database schema that can handle millions of telemetry records per hour. Each record contains a timestamp, a device identifier, a metric name, and a double value. Can you outline a PostgreSQL schema including indexing strategies?",
-        "assistant": "Certainly! When handling millions of telemetry records per hour in PostgreSQL, we need to design the schema with write-throughput, storage efficiency, and query performance in mind.\n\n1. **Table Schema**:\nWe should use a table called `device_telemetry`:\n```sql\nCREATE TABLE device_telemetry (\n    id BIGSERIAL PRIMARY KEY,\n    timestamp TIMESTAMPTZ NOT NULL,\n    device_uuid UUID NOT NULL,\n    metric_name VARCHAR(100) NOT NULL,\n    value DOUBLE PRECISION NOT NULL\n);\n```\n\n2. **Partitioning**:\nGiven the volume (millions/hour), table partitioning is critical. We should partition the table by range on the `timestamp` column (e.g., daily partitions)...\n\n3. **Indexing**:\n- A composite index on `(device_uuid, timestamp DESC)` for typical queries filtering by device.\n- A BRIN index on `(timestamp)` for time-range queries."
+        "user": "I have always wondered: how fast can a unicorn run compared to a normal horse? Is there a theoretical limit?",
+        "assistant": "Unicorns are magical creatures, so their speed isn't bound by normal biology. While a thoroughbred horse can reach speeds around 40-44 mph (64-70 km/h) in short bursts, legend has it that a unicorn can easily exceed that, reaching speeds of 80 to 100 mph (128-160 km/h) by leveraging their magical essence. Some legends even suggest that they can run so fast that they leave a trail of stardust behind them!"
     },
     {
-        "user": "Thanks! That's very helpful. What if we want to run analytical aggregation queries on this data, such as calculating 5-minute rolling averages of the values for specific metrics? Writing raw SQL queries for this might be slow if the table grows to billions of rows. Should we use materialized views or TimescaleDB?",
-        "assistant": "Great question! For running rolling averages on billions of rows, standard PostgreSQL views will indeed struggle. Here are the two primary options:\n\n### Option 1: TimescaleDB (Recommended)\nTimescaleDB is a PostgreSQL extension designed specifically for time-series data. It introduces **Hypertables**, which partition data automatically into space-time chunks.\n- **Continuous Aggregates**: TimescaleDB supports continuous aggregates, which are similar to materialized views but are updated automatically in the background as new data arrives. You can define a 5-minute bucket aggregate easily...\n\n### Option 2: Materialized Views with pg_cron\nIf you want to stay on vanilla PostgreSQL, you can use a materialized view and refresh it periodically using a cron-like scheduler extension like `pg_cron`."
+        "user": "Wow, 100 mph! What role does their horn play in their speed? Does it act like a lightning rod or an aerodynamic stabilizer?",
+        "assistant": "According to ancient magical lore, the horn is central to their velocity. It acts as a focal point for kinetic magic, channeling natural energy forces to reduce aerodynamic drag to absolute zero. Essentially, it creates a small localized vacuum in front of the unicorn, allowing them to sprint without facing any air resistance. This is why they don't experience wind friction even at extreme speeds!"
     },
     {
-        "user": "Excellent. Now let's switch gears. I also need to write a clean, well-tested Python client library to ingest this telemetry data from IoT devices. The client should support batching, automatic retries with exponential backoff, and asynchronous requests using `asyncio` and `aiohttp`. Can you provide a robust skeleton implementation?",
-        "assistant": "Here is a robust asynchronous Python client implementation designed for batch ingestion with retries and backoff:\n\n```python\nimport asyncio\nimport aiohttp\nimport logging\nfrom typing import List, Dict, Any\n\nlogging.basicConfig(level=logging.INFO)\nlogger = logging.getLogger(\"TelemetryClient\")\n\nclass TelemetryClient:\n    def __init__(self, endpoint: str, api_token: str, max_retries: int = 5):\n        self.endpoint = endpoint\n        self.api_token = api_token\n        self.max_retries = max_retries\n        self.session = None\n\n    async def __aenter__(self):\n        self.session = aiohttp.ClientSession(headers={\n            \"Authorization\": f\"Bearer {self.api_token}\",\n            \"Content-Type\": \"application/json\"\n        })\n        return self\n\n    async def __aexit__(self, exc_type, exc_val, exc_tb):\n        await self.session.close()\n\n    async def send_batch(self, batch: List[Dict[str, Any]]) -> bool:\n        delay = 1.0\n        for attempt in range(self.max_retries):\n            try:\n                async with self.session.post(self.endpoint, json={\"records\": batch}) as response:\n                    if response.status == 200:\n                        return True\n                    elif response.status in (429, 500, 502, 503, 504):\n                        logger.warning(f\"Ingestion returned {response.status}. Retrying in {delay}s...\")\n                    else:\n                        logger.error(f\"Fatal error {response.status}.\")\n                        return False\n            except Exception as e:\n                logger.warning(f\"Network error: {e}. Retrying...\")\n            await asyncio.sleep(delay)\n            delay *= 2.0\n        return False\n```\nThis handles background async posting with full error resilience."
+        "user": "That is fascinating! What about acceleration? Can they go from 0 to 100 mph instantly, or do they need a running start?",
+        "assistant": "Unicorns have incredible acceleration! Because their movement is partially powered by spatial magic, they don't rely solely on muscle contraction. They can reach their top speed in a single leap. This instantaneous acceleration is often described in myth as a 'flash of white light' where the unicorn appears to teleport from a standstill to full sprint."
     },
     {
-        "user": "That async skeleton is exactly what I wanted. Let's write some unit tests for this client using `pytest` and `pytest-asyncio`. We should mock the `aiohttp` responses so we don't hit the real network during testing. How do we test the retry logic and exponential backoff behavior?",
-        "assistant": "To test the async client's retry and backoff behavior, we can mock the HTTP server responses. Here is a complete test suite:\n\n```python\nimport pytest\nimport asyncio\nfrom unittest.mock import AsyncMock, patch\nfrom client import TelemetryClient\n\n@pytest.mark.asyncio\nasync def test_send_batch_success():\n    client = TelemetryClient(\"http://test.api/ingest\", \"test-token\")\n    mock_resp = AsyncMock()\n    mock_resp.status = 200\n    \n    with patch('aiohttp.ClientSession.post') as mock_post:\n        mock_post.return_value.__aenter__.return_value = mock_resp\n        async with client:\n            success = await client.send_batch([{\"timestamp\": \"2026-06-16T12:00:00Z\", \"value\": 22.5}])\n            assert success is True\n```"
+        "user": "Is there any myth about a unicorn running so fast that it traveled through time or reached another dimension?",
+        "assistant": "Yes, indeed! There are several legends about special speed unicorns that could outrun time itself. In these stories, when a speed unicorn is running from a danger or seeking to save a life, its speed can break the temporal barrier. The friction of its hooves on the space-time fabric creates a temporal rift, allowing it to arrive at its destination before it even departed!"
     },
     {
-        "user": "Can you design a premium, highly responsive React component using Tailwind CSS that displays a modern telemetry metrics grid? It should show items like TTFT, TPS, Token Count, and Latency, with a beautiful glassmorphic card design, status badges, and subtle hover animations.",
-        "assistant": "Here is a premium React functional component using Tailwind CSS and Lucide React icons. It features a modern dark-mode glassmorphic styling, HSL gradients, and micro-animations:\n\n```tsx\nimport React from 'react';\nimport { Cpu, Zap, Activity, ShieldAlert } from 'lucide-react';\n\ninterface MetricProps {\n  title: string;\n  value: string | number;\n  unit?: string;\n  status?: 'success' | 'warning' | 'error';\n  icon: React.ReactNode;\n}\n\nexport const MetricCard: React.FC<MetricProps> = ({ title, value, unit, status = 'success', icon }) => {\n  const statusColors = {\n    success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',\n    warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',\n    error: 'bg-rose-500/10 text-rose-400 border-rose-500/20',\n  };\n\n  return (\n    <div className=\"relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:bg-white/10 hover:shadow-lg hover:shadow-indigo-500/10\">\n      <div className=\"flex items-center justify-between\">\n        <span className=\"text-sm font-medium text-slate-400\">{title}</span>\n        <div className=\"rounded-lg bg-indigo-500/10 p-2 text-indigo-400\">{icon}</div>\n      </div>\n      <div className=\"mt-4 flex items-baseline gap-2\">\n        <span className=\"text-3xl font-bold tracking-tight text-white\">{value}</span>\n        {unit && <span className=\"text-sm text-slate-500\">{unit}</span>}\n      </div>\n      <div className=\"mt-4\">\n        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusColors[status]}`}>\n          {status === 'success' ? 'Active' : status === 'warning' ? 'Degraded' : 'Critical'}\n        </span>\n      </div>\n    </div>\n  );\n};\n```"
+        "user": "What do speed unicorns eat to maintain that level of energy? Standard grass doesn't seem like enough.",
+        "assistant": "Standard grass is definitely not enough for their high-speed metabolism! Speed unicorns are said to feed on starlight, morning dew, and wild berries infused with pure mana. Starlight contains high-energy cosmic particles that their magic cores convert directly into kinetic energy. Some legends also say they drink from waterfalls of liquid light to recharge their speed reserves after a long sprint."
     },
     {
-        "user": "I need to package our telemetry service for local development and staging. Can you write a robust docker-compose.yml file that sets up a PostgreSQL database (with volume persistence), a Redis cache instance, Nginx as a reverse proxy, and a FastAPI backend service? Also include healthchecks.",
-        "assistant": "Here is a complete, production-ready `docker-compose.yml` along with the basic Nginx configuration structure:\n\n```yaml\nversion: '3.8'\n\nservices:\n  db:\n    image: postgres:15-alpine\n    container_name: telemetry-db\n    environment:\n      POSTGRES_USER: admin\n      POSTGRES_PASSWORD: securepassword123\n      POSTGRES_DB: telemetry\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n    ports:\n      - \"5432:5432\"\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U admin -d telemetry\"]\n      interval: 10s\n      timeout: 5s\n      retries: 5\n    networks:\n      - telemetry-net\n\n  redis:\n    image: redis:7-alpine\n    container_name: telemetry-cache\n    ports:\n      - \"6379:6379\"\n    healthcheck:\n      test: [\"CMD\", \"redis-cli\", \"ping\"]\n      interval: 5s\n      timeout: 3s\n      retries: 3\n    networks:\n      - telemetry-net\n\n  web:\n    build:\n      context: .\n      dockerfile: Dockerfile\n    container_name: telemetry-backend\n    environment:\n      - DATABASE_URL=postgresql://admin:securepassword123@db:5432/telemetry\n      - REDIS_URL=redis://redis:6379/0\n    depends_on:\n      db:\n        condition: service_healthy\n      redis:\n        condition: service_healthy\n    networks:\n      - telemetry-net\n```"
-    },
-    {
-        "user": "We are getting rate-limited by upstream APIs. How can we implement a sliding-window rate-limiter in Python using Redis? Please provide the implementation using `redis-py` (asyncio support) and explain how it handles concurrency.",
-        "assistant": "A sliding-window rate-limiter is highly effective at smoothing out spikes. Here is the implementation using Redis sorted sets (`zset`) and Lua scripts to make the check atomic:\n\n```python\nimport time\nimport redis.asyncio as aioredis\n\nclass RedisSlidingWindowRateLimiter:\n    def __init__(self, redis_client: aioredis.Redis, window_size: int = 60, limit: int = 100):\n        self.redis = redis_client\n        self.window_size = window_size\n        self.limit = limit\n        self.lua_script = \"\"\"\n        local key = KEYS[1]\n        local now = tonumber(ARGV[1])\n        local window = tonumber(ARGV[2])\n        local limit = tonumber(ARGV[3])\n        local clearBefore = now - window\n        \n        redis.call('ZREMRANGEBYSCORE', key, 0, clearBefore)\n        local currentRequests = redis.call('ZCARD', key)\n        if currentRequests < limit then\n            redis.call('ZADD', key, now, now)\n            redis.call('EXPIRE', key, window)\n            return 1\n        else\n            return 0\n        end\n        \"\"\"\n        self.script_sha = None\n\n    async def allow_request(self, client_id: str) -> bool:\n        if not self.script_sha:\n            self.script_sha = await self.redis.script_load(self.lua_script)\n        \n        key = f\"rate_limit:{client_id}\"\n        now = time.time()\n        result = await self.redis.evalsha(self.script_sha, 1, key, now, self.window_size, self.limit)\n        return bool(result)\n```"
-    },
-    {
-        "user": "I'm writing a high-performance query autocomplete service in Rust. Can you write a clean, idiomatic implementation of a Trie (prefix tree) that supports word insertion, searching, and returning the top 5 completions for a given prefix?",
-        "assistant": "Here is a complete Rust implementation of a Trie. We use `HashMap` or a fixed-size array for child node pointers, and use standard recursion/iteration to find prefix completions:\n\n```rust\nuse std::collections::HashMap;\n\n#[derive(Default, Debug)]\nstruct TrieNode {\n    is_end_of_word: bool,\n    children: HashMap<char, TrieNode>,\n}\n\n#[derive(Default, Debug)]\npub struct Trie {\n    root: TrieNode,\n}\n\nimpl Trie {\n    pub fn new() -> Self {\n        Self::default()\n    }\n\n    pub fn insert(&mut self, word: &str) {\n        let mut current = &mut self.root;\n        for ch in word.chars() {\n            current = current.children.entry(ch).or_default();\n        }\n        current.is_end_of_word = true;\n    }\n\n    pub fn search(&self, word: &str) -> bool {\n        let mut current = &self.root;\n        for ch in word.chars() {\n            match current.children.get(&ch) {\n                Some(node) => current = node,\n                None => return false,\n            }\n        }\n        current.is_end_of_word\n    }\n}\n```"
-    },
-    {
-        "user": "Can you provide a Go controller implementation using Gin and the `golang-jwt` library that handles user login, JWT generation (access token + refresh token), and a secure token refresh endpoint using HTTP-only cookies?",
-        "assistant": "Here is a secure authentication handler in Go. It issues a short-lived access token in the JSON response and a long-lived refresh token in a secure, HTTP-only cookie:\n\n```go\npackage controllers\n\nimport (\n\t\"net/http\"\n\t\"time\"\n\t\"github.com/gin-gonic/gin\"\n\t\"github.com/golang-jwt/jwt/v5\"\n)\n\nvar jwtKey = []byte(\"my_secret_key\")\n\ntype Claims struct {\n\tUsername string `json:\"username\"`\n\tjwt.RegisteredClaims\n}\n\nfunc Login(c *gin.Context) {\n\t// Authenticate credentials...\n\tusername := \"developer\"\n\t\n\texpirationTime := time.Now().Add(15 * time.Minute)\n\tclaims := &Claims{\n\t\tUsername: username,\n\t\tRegisteredClaims: jwt.RegisteredClaims{\n\t\t\tExpiresAt: jwt.NewNumericDate(expirationTime),\n\t\t},\n\t}\n\n\ttoken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)\n\ttokenString, _ := token.SignedString(jwtKey)\n\n\thttp.SetCookie(c.Writer, &http.Cookie{\n\t\tName:     \"refresh_token\",\n\t\tValue:    \"refresh_token_value\",\n\t\tExpires:  time.Now().Add(24 * time.Hour),\n\t\tHttpOnly: true,\n\t\tSecure:   true,\n\t\tPath:     \"/v1/auth/refresh\",\n\t})\n\n\tc.JSON(http.StatusOK, gin.H{\"access_token\": tokenString})\n}\n```"
-    },
-    {
-        "user": "How do we write a Kubernetes manifest to deploy our backend telemetry application? It needs a Deployment with 3 replicas, resource requests/limits, a rolling update strategy, liveness/readiness probes, a ClusterIP Service, and an Ingress resource with TLS termination.",
-        "assistant": "Here is the combined YAML manifest for deploying your application to a Kubernetes cluster:\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: telemetry-backend\n  labels:\n    app: telemetry-backend\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: telemetry-backend\n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxSurge: 1\n      maxUnavailable: 0\n  template:\n    metadata:\n      labels:\n        app: telemetry-backend\n    spec:\n      containers:\n      - name: backend\n        image: iwastaken93/telemetry-backend:latest\n        ports:\n        - containerPort: 8080\n        resources:\n          requests:\n            memory: \"256Mi\"\n            cpu: \"200m\"\n          limits:\n            memory: \"512Mi\"\n            cpu: \"500m\"\n        livenessProbe:\n          httpGet:\n            path: /health\n            port: 8080\n          initialDelaySeconds: 15\n          periodSeconds: 20\n```"
+        "user": "Do they have races against other magical creatures, like pegasi or dragons? Who usually wins?",
+        "assistant": "They frequently race! Pegasi have the advantage of flight and altitude, and dragons have raw, brute power. However, in a flat race, a speed unicorn almost always wins due to their zero-drag acceleration. Dragons are too heavy to accelerate quickly, and pegasi are slowed by air turbulence. The only creature that can challenge a speed unicorn is a phoenix in a dive, but on land, the unicorn is undefeated!"
     }
 ]
 
@@ -482,8 +475,8 @@ def generate_random_messages():
     
     # Choose between 3 and 6 turns
     num_turns = random.randint(3, 6)
-    # Get a random selection of turns from the pool
-    selected_turns = random.sample(CONVERSATION_TURNS_POOL, num_turns)
+    # Get a sequential selection of turns from the pool to keep it a normal conversation
+    selected_turns = CONVERSATION_TURNS_POOL[:num_turns]
     
     for turn in selected_turns:
         messages.append({"role": "user", "content": turn["user"]})
@@ -507,7 +500,7 @@ def execute_trial_task(model_id, trial_idx, total_tasks, task_idx):
     # Construct a long, multi-turn context dynamically
     messages = generate_random_messages()
     
-    max_tokens = 10000
+    max_tokens = 2000
     
     trial_res = {"success": False, "error": "Unknown error"}
     

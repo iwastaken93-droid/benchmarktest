@@ -20,13 +20,33 @@ completed_tasks = 0
 def fetch_trial_worker(model_id, trial_idx, api_key, messages, use_stream_options, total_tasks):
     global completed_tasks
     
+    # Copy messages to avoid side-effects
+    messages = list(messages)
+    
+    # For models that don't support system instructions (e.g. gemma-2-), merge system prompt into first user message
+    if any(kw in model_id.lower() for kw in ["gemma-2-"]):
+        new_messages = []
+        system_content = ""
+        for msg in messages:
+            if msg["role"] == "system":
+                system_content = msg["content"]
+            elif msg["role"] == "user":
+                if system_content:
+                    new_messages.append({"role": "user", "content": f"{system_content}\n\n{msg['content']}"})
+                    system_content = ""
+                else:
+                    new_messages.append(msg)
+            else:
+                new_messages.append(msg)
+        messages = new_messages
+
     url = "https://integrate.api.nvidia.com/v1/chat/completions"
     payload = {
         "model": model_id,
         "messages": messages,
         "temperature": 0.7,
         "top_p": 0.7,
-        "max_tokens": 1000, # Cap max tokens for faster execution
+        "max_tokens": 2000,
         "stream": True
     }
     
