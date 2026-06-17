@@ -210,19 +210,10 @@ def run_trial(model_id, api_key, prompt_or_messages, max_tokens):
         
     url = "https://integrate.api.nvidia.com/v1/chat/completions"
     
-    # Check blacklist to avoid long timeouts/hangs on models known to fail on stream_options
-    model_lower = model_id.lower()
-    use_stream_options = True
-    if any(kw in model_lower for kw in [
-        "deepseek", "qwen", "solar", "gliner", "palmyra", 
-        "nemotron-mini", "parse", "translate", "vila", "deplot", "gemma-2-"
-    ]):
-        use_stream_options = False
-        
     # Retry transient errors up to 3 times
     last_res = {"success": False, "error": "Unknown error"}
     for attempt in range(3):
-        res = _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, use_stream_options)
+        res = _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url)
         if res.get("success"):
             return res
             
@@ -238,7 +229,7 @@ def run_trial(model_id, api_key, prompt_or_messages, max_tokens):
             
     return last_res
  
-def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, use_stream_options):
+def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url):
     if isinstance(prompt_or_messages, list):
         messages = list(prompt_or_messages)
     else:
@@ -269,9 +260,7 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
         "max_tokens": max_tokens,
         "stream": True
     }
-    if use_stream_options:
-        payload["stream_options"] = {"include_usage": True}
-        
+    
     req_data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(url, data=req_data, method='POST')
     req.add_header('Content-Type', 'application/json')
@@ -372,10 +361,6 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
                 "tpot_ms": tpot
             }
     except urllib.error.HTTPError as e:
-        # If we failed with 400 or 422 and were using stream_options, retry without them
-        if use_stream_options and e.code in (400, 422):
-            return _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, use_stream_options=False)
-            
         error_msg = f"HTTP Error {e.code}"
         try:
             error_body = e.read().decode('utf-8')
@@ -388,11 +373,6 @@ def _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, 
             pass
         return {"success": False, "error": error_msg}
     except Exception as e:
-        # If we encountered a timeout or generic error and were using stream_options, retry without them
-        if use_stream_options:
-            err_str = str(e).lower()
-            if "timeout" in err_str or "timed out" in err_str or "closed connection" in err_str:
-                return _run_trial_internal(model_id, api_key, prompt_or_messages, max_tokens, url, use_stream_options=False)
         return {"success": False, "error": str(e)}
 
 def save_incremental_model_result(model_summary):

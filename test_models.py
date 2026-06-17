@@ -1,5 +1,12 @@
 import sys
 import os
+
+# Reconfigure stdout to use UTF-8, avoiding CP1252/UnicodeEncodeError on Windows
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 import json
 import time
 import urllib.request
@@ -17,7 +24,7 @@ results_lock = threading.Lock()
 trial_results = {}  # model_id -> list of trial dictionaries
 completed_tasks = 0
 
-def fetch_trial_worker(model_id, trial_idx, api_key, messages, use_stream_options, total_tasks):
+def fetch_trial_worker(model_id, trial_idx, api_key, messages, total_tasks):
     global completed_tasks
     
     # Copy messages to avoid side-effects
@@ -50,9 +57,6 @@ def fetch_trial_worker(model_id, trial_idx, api_key, messages, use_stream_option
         "stream": True
     }
     
-    if use_stream_options:
-        payload["stream_options"] = {"include_usage": True}
-        
     req_data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(url, data=req_data, method='POST')
     req.add_header('Content-Type', 'application/json')
@@ -92,11 +96,6 @@ def fetch_trial_worker(model_id, trial_idx, api_key, messages, use_stream_option
                         pass
             total_time = (time.time() - start_time) * 1000.0
     except urllib.error.HTTPError as e:
-        if use_stream_options and e.code in (400, 422):
-            # Fallback retry without stream options
-            fetch_trial_worker(model_id, trial_idx, api_key, messages, use_stream_options=False, total_tasks=total_tasks)
-            return
-            
         try:
             error_occurred = f"HTTP Error {e.code}: {e.read().decode('utf-8')}"
         except Exception:
@@ -165,18 +164,9 @@ def main():
         # Generate a fresh randomized context for each trial run
         messages = nim_server.generate_random_messages()
         
-        # Check stream_options blacklist
-        model_lower = model_id.lower()
-        use_stream_options = True
-        if any(kw in model_lower for kw in [
-            "deepseek", "qwen", "solar", "gliner", "palmyra", 
-            "nemotron-mini", "parse", "translate", "vila", "deplot", "gemma-2-"
-        ]):
-            use_stream_options = False
-            
         t = threading.Thread(
             target=fetch_trial_worker,
-            args=(model_id, trial_idx, api_key, messages, use_stream_options, total_tasks),
+            args=(model_id, trial_idx, api_key, messages, total_tasks),
             daemon=True
         )
         t.start()
