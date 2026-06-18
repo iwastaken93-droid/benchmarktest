@@ -4,7 +4,6 @@ import json
 import time
 import urllib.request
 import urllib.error
-import threading
 from datetime import datetime
 
 # Reconfigure stdout to use UTF-8, avoiding CP1252/UnicodeEncodeError on Windows
@@ -20,17 +19,7 @@ sys.path.append(SCRIPT_DIR)
 
 import nim_server
 
-# Results tracking
-results_lock = threading.Lock()
-trial_results = {}  # model_id -> list of trial dictionaries
-completed_tasks = 0
-
-def fetch_trial_worker(model_id, trial_idx, api_key, messages, total_tasks):
-    global completed_tasks
-    
-    # Copy messages to avoid side-effects
-    messages = list(messages)
-    
+def run_sensitive_trial(model_id, trial_idx, api_key, messages):
     # For models that don't support system instructions (e.g. gemma-2-), merge system prompt into first user message
     if any(kw in model_id.lower() for kw in ["gemma-2-"]):
         new_messages = []
@@ -147,7 +136,7 @@ def fetch_trial_worker(model_id, trial_idx, api_key, messages, total_tasks):
             tps = (token_count - 1) / latency_delta_s
             tpot = (total_time - ttft) / (token_count - 1)
             
-    trial_res = {
+    return {
         "trial_idx": trial_idx,
         "success": success,
         "text": generated_text,
@@ -158,44 +147,15 @@ def fetch_trial_worker(model_id, trial_idx, api_key, messages, total_tasks):
         "tokens": token_count,
         "total_time_ms": total_time or 0.0
     }
-    
-    with results_lock:
-        if model_id not in trial_results:
-            trial_results[model_id] = []
-        trial_results[model_id].append(trial_res)
-        completed_tasks += 1
-        print(f"[Progress] Completed {completed_tasks}/{total_tasks} trials. ({model_id} trial {trial_idx+1}/3 finished)")
 
 def main():
-    global completed_tasks
     api_key = nim_server.get_api_key()
     if not api_key:
         print("API Key not found!")
         return
 
-    # Fetch models dynamically from NVIDIA API
-    print("Fetching active models from NVIDIA API...")
-    try:
-        all_models = nim_server.fetch_models(api_key)
-        models = [m for m in all_models if nim_server.is_chat_model(m)]
-        print(f"Successfully fetched chat models to test ({len(models)}): {models}")
-    except Exception as e:
-        print(f"Error fetching active models: {e}. Falling back to default list.")
-        models = [
-            "google/gemma-2-2b-it",
-            "deepseek-ai/deepseek-v4-flash",
-            "deepseek-ai/deepseek-v4-pro",
-            "nvidia/nemotron-mini-4b-instruct",
-            "qwen/qwen3.5-122b-a10b",
-            "z-ai/glm-5.1",
-            "qwen/qwen3.5-397b-a17b",
-            "abacusai/dracarys-llama-3.1-70b-instruct",
-            "minimaxai/minimax-m3"
-        ]
-        models = [m for m in models if nim_server.is_chat_model(m)]
-        
-    # Exclude models that are tested separately in test_sensitive_models.py
-    sensitive_models = {
+    # List of sensitive models to test
+    sensitive_models = [
         "z-ai/glm-5.1",
         "minimaxai/minimax-m3",
         "deepseek-ai/deepseek-v4-flash",
@@ -204,45 +164,39 @@ def main():
         "nvidia/llama-3.1-nemotron-nano-8b-v1",
         "qwen/qwen3.5-122b-a10b",
         "qwen/qwen3.5-397b-a17b"
-    }
-    models = [m for m in models if m not in sensitive_models]
-    print(f"Models to test in parallel benchmark ({len(models)}): {models}")
-        
-    # Interleave tasks across different models to distribute load
-    all_tasks = []
-    for trial_idx in range(3):
-        for model_id in models:
-            all_tasks.append((model_id, trial_idx))
-            
-    total_tasks = len(all_tasks)
-    print(f"Starting Multi-Model Concurrency Test: {len(models)} models, 3 trials each = {total_tasks} total tasks.")
-    print("Spawning trial threads spaced 2.0 seconds apart...")
+    ]
     
-    # Spawn background threads
-    for idx, (model_id, trial_idx) in enumerate(all_tasks):
-        # Generate a fresh randomized context for each trial run
-        messages = nim_server.generate_random_messages()
-        
-        t = threading.Thread(
-            target=fetch_trial_worker,
-            args=(model_id, trial_idx, api_key, messages, total_tasks),
-            daemon=True
-        )
-        t.start()
-        
-        # Wait 5.0 seconds before launching the next task
-        time.sleep(5.0)
-        
-    print("All tasks spawned. Waiting for completions in the background...")
-    while True:
-        with results_lock:
-            done = completed_tasks == total_tasks
-        if done:
-            break
-        time.sleep(1.0)
-        
+    # Filter through is_chat_model (which filters out any containing "llama")
+    models = [m for m in sensitive_models if nim_server.is_chat_model(m)]
+    print(f"Sensitive models to test sequentially ({len(models)}): {models}")
+    
+    trial_results = {}
+    total_trials = len(models) * 3
+    completed_trials = 0
+    
+    # Run sequentially
+    for model_id in models:
+        trial_results[model_id] = []
+        for trial_idx in range(3):
+            # Print status
+            print(f"\n[Starting] Model: {model_id} | Trial {trial_idx+1}/3")
+            messages = nim_server.generate_random_messages()
+            
+            # Execute trial
+            res = run_sensitive_trial(model_id, trial_idx, api_key, messages)
+            trial_results[model_id].append(res)
+            
+            completed_trials += 1
+            print(f"[Progress] Completed {completed_trials}/{total_trials} sequential trials. ({model_id} trial {trial_idx+1}/3 finished)")
+            
+            # Sleep 5 seconds between each trial
+            if completed_trials < total_trials:
+                print("Sleeping 5.0 seconds before next trial...")
+                time.sleep(5.0)
+
+    # Print results to stdout
     print("\n==================================================")
-    print("ALL CONCURRENT BATCH TRIALS COMPLETED. PRINTING RESULTS:")
+    print("ALL SEQUENTIAL TRIALS COMPLETED. PRINTING RESULTS:")
     print("==================================================")
     
     for model_id in sorted(models):
@@ -250,10 +204,7 @@ def main():
         print(f"MODEL: {model_id}")
         print(f"##################################################")
         
-        trials = trial_results.get(model_id, [])
-        # Sort trials by trial index
-        trials = sorted(trials, key=lambda x: x["trial_idx"])
-        
+        trials = sorted(trial_results[model_id], key=lambda x: x["trial_idx"])
         for trial in trials:
             print(f"\n--- TRIAL {trial['trial_idx'] + 1} ---")
             if trial["success"]:
@@ -267,28 +218,14 @@ def main():
             else:
                 print(f"Success: False")
                 print(f"Error: {trial['error']}")
-                
-    # Save results to public/benchmark_results.json
-    results_path = os.path.join(SCRIPT_DIR, "public", "benchmark_results.json")
-    os.makedirs(os.path.dirname(results_path), exist_ok=True)
-    
-    run_timestamp = datetime.now().isoformat()
-    
-    run_results = []
+
+    # Compile new run_results
+    new_results_dict = {}
     for model_id in models:
-        trials = trial_results.get(model_id, [])
-        trials = sorted(trials, key=lambda x: x["trial_idx"])
-        
-        json_trials = []
-        success_trials = []
-        for t in trials:
-            cleaned = dict(t)
-            cleaned.pop("text", None)  # Remove response text to keep JSON size small
-            json_trials.append(cleaned)
-            if t.get("success"):
-                success_trials.append(t)
-                
+        trials = sorted(trial_results[model_id], key=lambda x: x["trial_idx"])
+        success_trials = [t for t in trials if t.get("success")]
         success_rate = len(success_trials) / len(trials) if trials else 0.0
+        
         if success_trials:
             avg_ttft = sum(t["ttft_ms"] for t in success_trials) / len(success_trials)
             avg_tps = sum(t["tps"] for t in success_trials) / len(success_trials)
@@ -310,7 +247,13 @@ def main():
             print(f"[Benchmark] Skipping saving results for filtered guardrail model {model_id}")
             continue
             
-        run_results.append({
+        json_trials = []
+        for t in trials:
+            cleaned = dict(t)
+            cleaned.pop("text", None)  # Remove response text to keep JSON size small
+            json_trials.append(cleaned)
+            
+        new_results_dict[model_id] = {
             "model": model_id,
             "avg_ttft_ms": avg_ttft,
             "avg_tps": avg_tps,
@@ -318,8 +261,12 @@ def main():
             "avg_tokens": avg_tokens,
             "success_rate": success_rate,
             "trials": json_trials
-        })
-        
+        }
+
+    # Load existing benchmark results to merge
+    results_path = os.path.join(SCRIPT_DIR, "public", "benchmark_results.json")
+    os.makedirs(os.path.dirname(results_path), exist_ok=True)
+    
     history = []
     if os.path.exists(results_path):
         try:
@@ -329,22 +276,53 @@ def main():
                     history = []
         except Exception:
             pass
-            
-    new_run = {
-        "timestamp": run_timestamp,
-        "results": run_results,
-        "status": "completed"
-    }
-    history.append(new_run)
-    if len(history) > 336:
-        history = history[-336:]
+
+    if history:
+        # Merge into the latest run
+        latest_run = history[-1]
+        print(f"\n[Merge] Found latest run from {latest_run.get('timestamp')}. Merging results...")
+        
+        # We will update/merge the results list
+        current_results = latest_run.get("results", [])
+        updated_results = []
+        
+        # Track which of the new results have been merged
+        merged_models = set()
+        
+        for item in current_results:
+            model_id = item.get("model")
+            if model_id in new_results_dict:
+                # Replace with the new result
+                updated_results.append(new_results_dict[model_id])
+                merged_models.add(model_id)
+                print(f"  -> Replaced/Updated results for {model_id}")
+            else:
+                # Keep original result
+                updated_results.append(item)
+                
+        # Append any new models that weren't in the original results list
+        for model_id, result in new_results_dict.items():
+            if model_id not in merged_models:
+                updated_results.append(result)
+                print(f"  -> Added new results for {model_id}")
+                
+        latest_run["results"] = updated_results
+    else:
+        # Create a new run
+        print("\n[Merge] No existing run history found. Creating a new run...")
+        new_run = {
+            "timestamp": datetime.now().isoformat(),
+            "results": list(new_results_dict.values()),
+            "status": "completed"
+        }
+        history.append(new_run)
         
     try:
         with open(results_path, "w") as f:
             json.dump(history, f, indent=2)
-        print(f"\n[Benchmark] Successfully saved consolidated results to {results_path}")
+        print(f"[Benchmark] Successfully saved consolidated results to {results_path}")
     except Exception as e:
-        print(f"\n[Benchmark] Error saving consolidated results: {e}")
+        print(f"[Benchmark] Error saving consolidated results: {e}")
 
 if __name__ == '__main__':
     main()

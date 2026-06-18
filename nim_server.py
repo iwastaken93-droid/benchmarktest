@@ -159,7 +159,8 @@ def is_chat_model(model_id):
     model_id_lower = model_id.lower()
     exclude_keywords = [
         'embed', 'rerank', 'clip', 'similarity', 'image', 'stable-diffusion', 'whisper', 'sdxl', 
-        'vision-language', 'neva', 'kosmos', 'nemoguard', 'safety-guard', 'guard', 'safety', 'moderation'
+        'vision-language', 'neva', 'kosmos', 'nemoguard', 'safety-guard', 'guard', 'safety', 'moderation',
+        'llama'
     ]
     for kw in exclude_keywords:
         if kw in model_id_lower:
@@ -231,9 +232,9 @@ def run_trial(model_id, api_key, prompt_or_messages, max_tokens):
         if any(h in err_msg.lower() for h in ["404", "401", "403", "timed out", "timeout", "10060", "connection", "host", "refused", "reset"]):
             return res
             
-        # Wait 2 seconds before retrying transient issues (e.g. timeouts, 503s, empty responses, or 429s)
+        # Wait 5 seconds before retrying transient issues (e.g. timeouts, 503s, empty responses, or 429s)
         if attempt < 2:
-            time.sleep(2.0)
+            time.sleep(5.0)
             
     return last_res
  
