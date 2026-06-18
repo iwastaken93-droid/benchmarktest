@@ -194,17 +194,19 @@ def main():
         ]
         models = [m for m in models if nim_server.is_chat_model(m)]
         
-    # Reorder models so priority models run first
-    priority_models = [
+    # Exclude models that are tested separately in test_sensitive_models.py
+    sensitive_models = {
         "z-ai/glm-5.1",
         "minimaxai/minimax-m3",
         "deepseek-ai/deepseek-v4-flash",
-        "deepseek-ai/deepseek-v4-pro"
-    ]
-    priority_found = [m for m in models if m in priority_models]
-    other_models = [m for m in models if m not in priority_models]
-    priority_found.sort(key=lambda x: priority_models.index(x))
-    models = priority_found + other_models
+        "deepseek-ai/deepseek-v4-pro",
+        "abacusai/dracarys-llama-3.1-70b-instruct",
+        "nvidia/llama-3.1-nemotron-nano-8b-v1",
+        "qwen/qwen3.5-122b-a10b",
+        "qwen/qwen3.5-397b-a17b"
+    }
+    models = [m for m in models if m not in sensitive_models]
+    print(f"Models to test in parallel benchmark ({len(models)}): {models}")
         
     # Interleave tasks across different models to distribute load
     all_tasks = []
