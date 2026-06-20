@@ -1,9 +1,9 @@
-name: Hourly NIM Performance Benchmark
+name: Hourly NIM Sensitive Performance Benchmark
 on:
   workflow_dispatch: # Triggered via Cloudflare Worker cron, dashboard trigger clicks, or manually from GitHub UI
 
 jobs:
-  benchmark:
+  sensitive_benchmark:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,17 +20,17 @@ jobs:
         run: |
           pip install tiktoken
 
-      - name: Run Evaluator
+      - name: Run Sensitive Evaluator
         env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
-          python -u test_models.py
+          python -u test_sensitive_models.py
 
       - name: Commit and Push Results
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add public/benchmark_results.json
-          git commit -m "Update benchmark metrics [skip ci]" || exit 0
+          git commit -m "Update sensitive benchmark metrics [skip ci]" || exit 0
           git pull --rebase origin master
           git push origin master
