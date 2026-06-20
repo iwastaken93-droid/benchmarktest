@@ -5,6 +5,8 @@ on:
 jobs:
   quick_test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,3 +25,12 @@ jobs:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
           python -u quick_test.py
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/benchmark_results.json
+          git commit -m "Update quick test benchmark metrics [skip ci]" || exit 0
+          git pull --rebase origin master
+          git push origin master
