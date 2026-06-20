@@ -4,7 +4,6 @@ import json
 import time
 import urllib.request
 import urllib.error
-import threading
 from datetime import datetime
 
 # Reconfigure stdout to use UTF-8, avoiding CP1252/UnicodeEncodeError on Windows
@@ -20,11 +19,6 @@ sys.path.append(SCRIPT_DIR)
 
 import nim_server
 
-# Results tracking
-results_lock = threading.Lock()
-trial_results = {}  # model_id -> list of trial dictionaries
-completed_tasks = 0
-
 def run_quick_trial(model_id, trial_idx, api_key, messages):
     url = "https://integrate.api.nvidia.com/v1/chat/completions"
     payload = {
@@ -32,7 +26,7 @@ def run_quick_trial(model_id, trial_idx, api_key, messages):
         "messages": messages,
         "temperature": 0.7,
         "top_p": 0.7,
-        "max_tokens": 2000,
+        "max_tokens": 300,  # Cap at 300 tokens for a 100-word story
         "stream": True
     }
     
@@ -137,19 +131,7 @@ def run_quick_trial(model_id, trial_idx, api_key, messages):
         "total_time_ms": total_time or 0.0
     }
 
-def fetch_trial_worker(model_id, trial_idx, api_key, messages, total_tasks):
-    global completed_tasks
-    res = run_quick_trial(model_id, trial_idx, api_key, messages)
-    
-    with results_lock:
-        if model_id not in trial_results:
-            trial_results[model_id] = []
-        trial_results[model_id].append(res)
-        completed_tasks += 1
-        print(f"[Progress] Completed {completed_tasks}/{total_tasks} trials. ({model_id} trial {trial_idx+1}/3 finished)")
-
 def main():
-    global completed_tasks
     api_key = nim_server.get_api_key()
     if not api_key:
         print("API Key not found!")
@@ -164,47 +146,38 @@ def main():
         'qwen/qwen3.5-397b-a17b'
     ]
     
-    print(f"Sensitive models to test concurrently ({len(models)}): {models}")
+    print(f"Sensitive models to test sequentially ({len(models)}): {models}")
     
-    # Interleave tasks across different models to distribute load
-    all_tasks = []
-    for trial_idx in range(3):
-        for model_id in models:
-            all_tasks.append((model_id, trial_idx))
-            
-    total_tasks = len(all_tasks)
-    print(f"Starting Multi-Model Concurrency Test for Sensitive Models: {len(models)} models, 3 trials each = {total_tasks} total tasks.")
-    print("Spawning trial threads spaced 10.0 seconds apart...")
+    trial_results = {}
+    total_trials = len(models) * 3
+    completed_trials = 0
     
-    # Spawn background threads
-    for idx, (model_id, trial_idx) in enumerate(all_tasks):
-        # Prompt for 1000 words
-        messages = [
-            {"role": "user", "content": "Write a 1000-word story about a speed unicorn, and you must emphasize \"MAKE IT SPEED UNICORN SPEEED\" so please make it about speed."}
-        ]
-        
-        t = threading.Thread(
-            target=fetch_trial_worker,
-            args=(model_id, trial_idx, api_key, messages, total_tasks),
-            daemon=True
-        )
-        t.start()
-        
-        # Wait 10.0 seconds before launching the next task
-        if idx < total_tasks - 1:
-            time.sleep(10.0)
+    # Run sequentially (no threads)
+    for model_id in models:
+        trial_results[model_id] = []
+        for trial_idx in range(3):
+            print(f"\n[Starting] Model: {model_id} | Trial {trial_idx+1}/3")
             
-    print("All tasks spawned. Waiting for completions in the background...")
-    while True:
-        with results_lock:
-            done = completed_tasks == total_tasks
-        if done:
-            break
-        time.sleep(1.0)
+            # Prompt for a 100-word story
+            messages = [
+                {"role": "user", "content": "Write a 100-word story about a speed unicorn, and you must emphasize \"MAKE IT SPEED UNICORN SPEEED\" so please make it about speed."}
+            ]
+            
+            # Execute trial
+            res = run_quick_trial(model_id, trial_idx, api_key, messages)
+            trial_results[model_id].append(res)
+            
+            completed_trials += 1
+            print(f"[Progress] Completed {completed_trials}/{total_trials} trials. ({model_id} trial {trial_idx+1}/3 finished)")
+            
+            # Sleep 5.0 seconds between trials to avoid rate-limiting
+            if completed_trials < total_trials:
+                print("Sleeping 5.0 seconds before next trial...")
+                time.sleep(5.0)
 
     # Print results to stdout
     print("\n==================================================")
-    print("ALL CONCURRENT TRIALS COMPLETED. PRINTING RESULTS:")
+    print("ALL SEQUENTIAL TRIALS COMPLETED. PRINTING RESULTS:")
     print("==================================================")
     
     for model_id in sorted(models):
@@ -212,7 +185,7 @@ def main():
         print(f"MODEL: {model_id}")
         print(f"##################################################")
         
-        trials = sorted(trial_results.get(model_id, []), key=lambda x: x["trial_idx"])
+        trials = sorted(trial_results[model_id], key=lambda x: x["trial_idx"])
         for trial in trials:
             print(f"\n--- TRIAL {trial['trial_idx'] + 1} ---")
             if trial["success"]:
@@ -230,7 +203,7 @@ def main():
     # Compile new run_results
     new_results_dict = {}
     for model_id in models:
-        trials = sorted(trial_results.get(model_id, []), key=lambda x: x["trial_idx"])
+        trials = sorted(trial_results[model_id], key=lambda x: x["trial_idx"])
         success_trials = [t for t in trials if t.get("success")]
         success_rate = len(success_trials) / len(trials) if trials else 0.0
         
