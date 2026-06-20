@@ -164,9 +164,9 @@ def main():
         for trial_idx in range(3):
             print(f"\n[Starting] Model: {model_id} | Trial {trial_idx+1}/3")
             
-            # Prompt for a 100-word story
+            # Prompt for a 2-sentence story
             messages = [
-                {"role": "user", "content": "Write a 100-word story about a speed unicorn, and you must emphasize \"MAKE IT SPEED UNICORN SPEEED\" so please make it about speed."}
+                {"role": "user", "content": "Write a 2-sentence story about a speed unicorn."}
             ]
             
             # Execute trial
