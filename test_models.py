@@ -194,7 +194,7 @@ def main():
         ]
         models = [m for m in models if nim_server.is_chat_model(m)]
         
-    # Exclude models that are tested separately in test_sensitive_models.py
+    # Exclude models that are tested separately in quick_test.py
     sensitive_models = {
         "z-ai/glm-5.1",
         "minimaxai/minimax-m3",
