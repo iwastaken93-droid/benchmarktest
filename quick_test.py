@@ -26,7 +26,7 @@ def run_quick_trial(model_id, trial_idx, api_key, messages):
         "messages": messages,
         "temperature": 0.7,
         "top_p": 0.7,
-        "max_tokens": 300,  # Cap at 300 tokens for a 100-word story
+        "max_tokens": 500,  # Cap at 500 tokens for the quick test
         "stream": True
     }
     
@@ -58,10 +58,16 @@ def run_quick_trial(model_id, trial_idx, api_key, messages):
         try:
             with urllib.request.urlopen(req, timeout=120) as response:
                 first_chunk = True
+                first_token_time = None
                 for line in response:
                     if first_chunk:
                         ttft = (time.time() - start_time) * 1000.0
+                        first_token_time = time.time()
                         first_chunk = False
+                    
+                    if first_token_time is not None and (time.time() - first_token_time > 30.0):
+                        print("  [Timeout] 30 seconds elapsed since first token. Stopping stream early to preserve metrics.")
+                        break
                     
                     line_str = line.decode('utf-8', errors='ignore').strip()
                     if line_str.startswith("data:"):
