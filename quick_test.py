@@ -178,16 +178,17 @@ def main():
             avg_tpot = 0.0
             
         json_trials = []
-        for t in trials:
+        for trial_idx, t in enumerate(trials):
             trial_data = {
+                "trial_idx": trial_idx,
                 "success": t["success"],
+                "error": t["error"],
                 "ttft_ms": t["ttft_ms"],
-                "tokens": t["tokens"],
                 "tps": t["tps"],
-                "tpot_ms": t["tpot_ms"]
+                "tpot_ms": t["tpot_ms"],
+                "tokens": t["tokens"],
+                "total_time_ms": t["total_time_ms"]
             }
-            if not t["success"]:
-                trial_data["error"] = t["error"]
             json_trials.append(trial_data)
             
         new_results_dict[model_id] = {
