@@ -4,6 +4,7 @@ import json
 import time
 import urllib.request
 import urllib.error
+from datetime import datetime
 
 # Reconfigure stdout to use UTF-8, avoiding CP1252/UnicodeEncodeError on Windows
 if hasattr(sys.stdout, 'reconfigure'):
@@ -76,25 +77,42 @@ def test_model(model_id, api_key):
     except Exception as e:
         error_occurred = str(e)
         
-    if error_occurred:
-        print(f"[{model_id}] Error: {error_occurred}\n")
-        return
-        
-    # Calculate stats
-    token_count = nim_server.count_completion_tokens(generated_text)
-    latency_delta_s = (total_time - ttft) / 1000.0 if total_time and ttft else 0
-    tps = (token_count - 1) / latency_delta_s if latency_delta_s > 0 and token_count > 1 else 0.0
+    success = error_occurred is None and len(generated_text.strip()) > 0
     
-    print(f"\n==================================================")
-    print(f"MODEL: {model_id}")
-    print(f"==================================================")
-    print(f"Response: {generated_text.strip()}")
-    print(f"--------------------------------------------------")
-    print(f"TTFT: {ttft:.2f} ms")
-    print(f"TPS: {tps:.2f} tokens/sec")
-    print(f"Tokens Generated: {token_count}")
-    print(f"Total Time: {total_time:.2f} ms")
-    print(f"==================================================\n")
+    # Calculate stats
+    token_count = 0
+    tps = 0.0
+    tpot = 0.0
+    if success:
+        token_count = nim_server.count_completion_tokens(generated_text)
+        latency_delta_s = (total_time - ttft) / 1000.0 if total_time and ttft else 0
+        if latency_delta_s > 0 and token_count > 1:
+            tps = (token_count - 1) / latency_delta_s
+            tpot = (total_time - ttft) / (token_count - 1)
+            
+    if not success:
+        print(f"[{model_id}] Error: {error_occurred or 'Empty response'}\n")
+    else:
+        print(f"\n==================================================")
+        print(f"MODEL: {model_id}")
+        print(f"==================================================")
+        print(f"Response: {generated_text.strip()}")
+        print(f"--------------------------------------------------")
+        print(f"TTFT: {ttft:.2f} ms")
+        print(f"TPS: {tps:.2f} tokens/sec")
+        print(f"Tokens Generated: {token_count}")
+        print(f"Total Time: {total_time:.2f} ms")
+        print(f"==================================================\n")
+        
+    return {
+        "success": success,
+        "error": error_occurred or ("Empty response" if not success else None),
+        "ttft_ms": ttft or 0.0,
+        "tps": tps,
+        "tpot_ms": tpot,
+        "tokens": token_count,
+        "total_time_ms": total_time or 0.0
+    }
 
 def main():
     api_key = nim_server.get_api_key()
@@ -112,10 +130,99 @@ def main():
     ]
     
     print(f"Starting simple quick test on {len(models)} models sequentially...\n")
-    for model in models:
-        print(f"Testing {model}...")
-        test_model(model, api_key)
-        time.sleep(2.0)
+    
+    new_results_dict = {}
+    total_models = len(models)
+    
+    for idx, model_id in enumerate(models):
+        print(f"Testing {model_id} ({idx+1}/{total_models})...")
+        res = test_model(model_id, api_key)
+        
+        # Format metrics to match public/benchmark_results.json schema
+        avg_ttft = res["ttft_ms"] if res["success"] else 0.0
+        avg_tps = res["tps"] if res["success"] else 0.0
+        avg_tpot = res["tpot_ms"] if res["success"] else 0.0
+        avg_tokens = res["tokens"] if res["success"] else 0.0
+        success_rate = 1.0 if res["success"] else 0.0
+        
+        trial = {
+            "success": res["success"],
+            "ttft_ms": res["ttft_ms"],
+            "tokens": res["tokens"],
+            "tps": res["tps"],
+            "tpot_ms": res["tpot_ms"]
+        }
+        if not res["success"]:
+            trial["error"] = res["error"]
+            
+        new_results_dict[model_id] = {
+            "model": model_id,
+            "avg_ttft_ms": avg_ttft,
+            "avg_tps": avg_tps,
+            "avg_tpot_ms": avg_tpot,
+            "avg_tokens": avg_tokens,
+            "success_rate": success_rate,
+            "trials": [trial]
+        }
+        
+        # Sleep 2 seconds between models
+        if idx < total_models - 1:
+            time.sleep(2.0)
+
+    # Load existing benchmark results to merge
+    results_path = os.path.join(SCRIPT_DIR, "public", "benchmark_results.json")
+    os.makedirs(os.path.dirname(results_path), exist_ok=True)
+    
+    history = []
+    if os.path.exists(results_path):
+        try:
+            with open(results_path, "r") as f:
+                history = json.load(f)
+                if not isinstance(history, list):
+                    history = []
+        except Exception:
+            pass
+
+    if history:
+        # Merge into the latest run
+        latest_run = history[-1]
+        print(f"\n[Merge] Found latest run from {latest_run.get('timestamp')}. Merging results...")
+        
+        current_results = latest_run.get("results", [])
+        updated_results = []
+        merged_models = set()
+        
+        for item in current_results:
+            model_id = item.get("model")
+            if model_id in new_results_dict:
+                updated_results.append(new_results_dict[model_id])
+                merged_models.add(model_id)
+                print(f"  -> Replaced/Updated results for {model_id}")
+            else:
+                updated_results.append(item)
+                
+        for model_id, result in new_results_dict.items():
+            if model_id not in merged_models:
+                updated_results.append(result)
+                print(f"  -> Added new results for {model_id}")
+                
+        latest_run["results"] = updated_results
+    else:
+        # Create a new run
+        print("\n[Merge] No existing run history found. Creating a new run...")
+        new_run = {
+            "timestamp": datetime.now().isoformat(),
+            "results": list(new_results_dict.values()),
+            "status": "completed"
+        }
+        history.append(new_run)
+        
+    try:
+        with open(results_path, "w") as f:
+            json.dump(history, f, indent=2)
+        print(f"[Benchmark] Successfully saved consolidated results to {results_path}")
+    except Exception as e:
+        print(f"[Benchmark] Error saving consolidated results: {e}")
 
 if __name__ == '__main__':
     main()
