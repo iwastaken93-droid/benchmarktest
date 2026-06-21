@@ -131,29 +131,64 @@ def main():
     
     print(f"Starting simple quick test on {len(models)} models sequentially...\n")
     
-    new_results_dict = {}
+    trial_results = {model_id: [] for model_id in models}
     total_models = len(models)
     
+    # Pass 1: Run 1 trial for each model (6 runs total)
+    print("--- Starting Pass 1 (1 trial per model) ---")
     for idx, model_id in enumerate(models):
-        print(f"Testing {model_id} ({idx+1}/{total_models})...")
+        print(f"Testing {model_id} (Pass 1, trial 1/3)...")
         res = test_model(model_id, api_key)
+        trial_results[model_id].append(res)
         
-        # Format metrics to match public/benchmark_results.json schema
-        avg_ttft = res["ttft_ms"] if res["success"] else 0.0
-        avg_tps = res["tps"] if res["success"] else 0.0
-        avg_tpot = res["tpot_ms"] if res["success"] else 0.0
-        avg_tokens = res["tokens"] if res["success"] else 0.0
-        success_rate = 1.0 if res["success"] else 0.0
+        # Sleep 2 seconds between models
+        if idx < total_models - 1:
+            time.sleep(2.0)
+            
+    # Sleep 2 seconds before Pass 2
+    time.sleep(2.0)
+    
+    # Pass 2: Run another 2 trials for each model (12 runs total)
+    print("\n--- Starting Pass 2 (2 additional trials per model) ---")
+    for idx, model_id in enumerate(models):
+        for trial_num in range(2):
+            print(f"Testing {model_id} (Pass 2, trial {trial_num+2}/3)...")
+            res = test_model(model_id, api_key)
+            trial_results[model_id].append(res)
+            
+            # Sleep 2 seconds between trials/models
+            time.sleep(2.0)
+
+    # Compile the results and average them
+    new_results_dict = {}
+    for model_id in models:
+        trials = trial_results[model_id]
+        success_trials = [t for t in trials if t.get("success")]
+        success_rate = len(success_trials) / len(trials) if trials else 0.0
         
-        trial = {
-            "success": res["success"],
-            "ttft_ms": res["ttft_ms"],
-            "tokens": res["tokens"],
-            "tps": res["tps"],
-            "tpot_ms": res["tpot_ms"]
-        }
-        if not res["success"]:
-            trial["error"] = res["error"]
+        if success_trials:
+            avg_ttft = sum(t["ttft_ms"] for t in success_trials) / len(success_trials)
+            avg_tps = sum(t["tps"] for t in success_trials) / len(success_trials)
+            avg_tokens = sum(t["tokens"] for t in success_trials) / len(success_trials)
+            avg_tpot = sum(t.get("tpot_ms", 0.0) for t in success_trials) / len(success_trials)
+        else:
+            avg_ttft = 0.0
+            avg_tps = 0.0
+            avg_tokens = 0.0
+            avg_tpot = 0.0
+            
+        json_trials = []
+        for t in trials:
+            trial_data = {
+                "success": t["success"],
+                "ttft_ms": t["ttft_ms"],
+                "tokens": t["tokens"],
+                "tps": t["tps"],
+                "tpot_ms": t["tpot_ms"]
+            }
+            if not t["success"]:
+                trial_data["error"] = t["error"]
+            json_trials.append(trial_data)
             
         new_results_dict[model_id] = {
             "model": model_id,
@@ -162,12 +197,8 @@ def main():
             "avg_tpot_ms": avg_tpot,
             "avg_tokens": avg_tokens,
             "success_rate": success_rate,
-            "trials": [trial]
+            "trials": json_trials
         }
-        
-        # Sleep 2 seconds between models
-        if idx < total_models - 1:
-            time.sleep(2.0)
 
     # Load existing benchmark results to merge
     results_path = os.path.join(SCRIPT_DIR, "public", "benchmark_results.json")
