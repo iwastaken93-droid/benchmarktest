@@ -23,10 +23,10 @@ def test_model(model_id, api_key):
     payload = {
         "model": model_id,
         "messages": [
-            {"role": "user", "content": "Write a 2-sentence story about a speed unicorn."}
+            {"role": "user", "content": "Write a 500-word story about a speed unicorn."}
         ],
         "temperature": 0.7,
-        "max_tokens": 150,
+        "max_tokens": 1000,
         "stream": True
     }
     
