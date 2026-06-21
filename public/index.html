@@ -800,7 +800,8 @@
       </div>
 
       <div id="tab-diurnal" class="tab-content">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;">
+          <p id="diurnal-caption" style="margin: 0; font-size: 0.82rem; color: var(--text-secondary);">Showing the average across all models. Tick 2+ models in the table below to compare them here.</p>
           <div class="view-toggle-group">
             <button id="btn-diurnal-all" class="toggle-btn active" onclick="setDiurnalRange('all')">All Time</button>
             <button id="btn-diurnal-weekly" class="toggle-btn" onclick="setDiurnalRange('weekly')">Last 7 Days</button>
@@ -1003,6 +1004,38 @@
       try { saved = localStorage.getItem('nim_theme') || 'dark'; } catch (e) {}
       applyTheme(saved);
     })();
+
+    // Palette shared by the diurnal comparison lines
+    const SERIES_PALETTE = [
+      '#76b900', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b',
+      '#10b981', '#ef4444', '#06b6d4', '#eab308', '#8b5cf6',
+      '#14b8a6', '#f97316'
+    ];
+
+    // Draws the numeric value at the end of each horizontal bar
+    const barValueLabels = {
+      id: 'barValueLabels',
+      afterDatasetsDraw(chart, args, opts) {
+        if (!opts || !opts.enabled) return;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data) return;
+        const ctx = chart.ctx;
+        const data = chart.data.datasets[0].data;
+        ctx.save();
+        ctx.font = "700 11px Inter, sans-serif";
+        ctx.fillStyle = opts.color || '#9ca3af';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        meta.data.forEach((bar, i) => {
+          const val = data[i];
+          if (val === null || val === undefined) return;
+          const text = opts.fmt ? opts.fmt(val) : String(val);
+          ctx.fillText(text, bar.x + 8, bar.y);
+        });
+        ctx.restore();
+      }
+    };
+    Chart.register(barValueLabels);
 
     // Load initial data on startup
     window.addEventListener('DOMContentLoaded', () => {
@@ -1304,7 +1337,19 @@
       })) : 999999;
       const minTTFT = successfulSelected.length > 0 ? Math.min(...successfulSelected.map(r => r.avg_ttft_ms)) : 999999;
       const maxReliability = selectedResults.length > 0 ? Math.max(...selectedResults.map(r => r.success_rate)) : 0;
-      
+
+      // One metric row: label + value (+ winner trophy) above a bar showing this model's value relative to the best
+      const metricRow = (label, valueText, pct, color, isWinner, isLast) => `
+        <div style="${isLast ? '' : 'border-bottom: 1px solid var(--border-color); padding-bottom: 10px;'}">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">${label}</span>
+            <span style="font-size: 0.95rem; font-weight: 700; color: ${isWinner ? color : 'var(--text-primary)'};">${valueText}${isWinner ? ' 🏆' : ''}</span>
+          </div>
+          <div style="height: 6px; background: var(--bg-glass); border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; width: ${Math.max(0, Math.min(100, pct)).toFixed(0)}%; background: ${color}; opacity: ${isWinner ? 1 : 0.5}; border-radius: 4px; transition: width var(--transition-fast);"></div>
+          </div>
+        </div>`;
+
       selectedResults.forEach(r => {
         const isOffline = r.success_rate === 0;
         let tpot = r.avg_tpot_ms;
@@ -1332,41 +1377,20 @@
           `;
         }
         
+        const tpsPct = maxTPS > 0 ? (r.avg_tps / maxTPS) * 100 : 0;
+        const tpotPct = (tpot > 0 && minTPOT < 999999) ? (minTPOT / tpot) * 100 : 0;
+        const ttftPct = (r.avg_ttft_ms > 0 && minTTFT < 999999) ? (minTTFT / r.avg_ttft_ms) * 100 : 0;
+        const relPct = r.success_rate * 100;
+        const relColor = r.success_rate === 1.0 ? 'var(--success-green)' : (r.success_rate > 0 ? 'var(--warning-yellow)' : 'var(--danger-red)');
+
         card.innerHTML += `
           <h3 style="font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 16px; padding-right: 80px; word-break: break-all; color: ${isOffline ? 'var(--text-muted)' : 'var(--text-primary)'};">${r.model}</h3>
           
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Throughput</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${isTPSWinner ? 'var(--accent-green)' : 'var(--text-primary)'};">
-                ${r.avg_tps > 0 ? `${r.avg_tps.toFixed(1)} tok/s` : 'Offline'}
-                ${isTPSWinner ? ' 🏆' : ''}
-              </span>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Time Per Token</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${isTPOTWinner ? 'var(--success-green)' : 'var(--text-primary)'};">
-                ${tpot > 0 ? `${tpot.toFixed(1)} ms/t` : 'Offline'}
-                ${isTPOTWinner ? ' 🏆' : ''}
-              </span>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">First Token Latency</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${isTTFTWinner ? 'var(--info-blue)' : 'var(--text-primary)'};">
-                ${r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'Offline'}
-                ${isTTFTWinner ? ' 🏆' : ''}
-              </span>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Reliability</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${r.success_rate === 1.0 ? 'var(--success-green)' : (r.success_rate > 0 ? 'var(--warning-yellow)' : 'var(--danger-red)')};">
-                ${(r.success_rate * 100).toFixed(0)}%
-                ${isReliabilityWinner && r.success_rate > 0 ? ' 🏆' : ''}
-              </span>
-            </div>
+            ${metricRow('Throughput', r.avg_tps > 0 ? `${r.avg_tps.toFixed(1)} tok/s` : 'Offline', tpsPct, 'var(--accent-green)', isTPSWinner, false)}
+            ${metricRow('Time Per Token', tpot > 0 ? `${tpot.toFixed(1)} ms/t` : 'Offline', tpotPct, 'var(--success-green)', isTPOTWinner, false)}
+            ${metricRow('First Token Latency', r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'Offline', ttftPct, 'var(--info-blue)', isTTFTWinner, false)}
+            ${metricRow('Reliability', `${(r.success_rate * 100).toFixed(0)}%`, relPct, relColor, isReliabilityWinner && r.success_rate > 0, true)}
           </div>
         `;
         container.appendChild(card);
@@ -1533,6 +1557,14 @@
       const ttftData = sortedResults.map(r => r.avg_ttft_ms > 0 ? r.avg_ttft_ms : 0);
       const reliabilityData = sortedResults.map(r => r.success_rate * 100);
 
+      // Give each horizontal bar room to breathe (avoids the cramped look with many models)
+      const barCount = sortedResults.length;
+      const barChartHeight = Math.max(300, Math.min(barCount * 26 + 90, 820));
+      ['speedChart', 'tpotChart', 'ttftChart', 'reliabilityChart'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.parentElement) el.parentElement.style.height = barChartHeight + 'px';
+      });
+
       // 1. Throughput Chart (TPS)
       if (speedChart) speedChart.destroy();
       const ctxSpeed = document.getElementById('speedChart').getContext('2d');
@@ -1558,9 +1590,11 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 56 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v.toFixed(0) }
           },
           scales: {
             x: {
@@ -1601,9 +1635,11 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 56 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v.toFixed(1) }
           },
           scales: {
             x: {
@@ -1644,9 +1680,11 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 64 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v >= 10000 ? (v / 1000).toFixed(1) + 's' : v.toFixed(0) }
           },
           scales: {
             x: {
@@ -1699,9 +1737,11 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 44 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v.toFixed(0) + '%' }
           },
           scales: {
             x: {
@@ -1839,55 +1879,60 @@
       });
       
       const allModelsSorted = Object.keys(calculateHourlyDiurnalData(fullHistory, [])).sort();
-      
-      const colorPalette = [
-        '#76b900', // NVIDIA Green
-        '#3b82f6', // Blue
-        '#8b5cf6', // Purple
-        '#ec4899', // Pink
-        '#f59e0b', // Amber/Orange
-        '#10b981', // Emerald/Green
-        '#ef4444', // Red
-        '#06b6d4', // Cyan
-        '#84cc16', // Lime
-        '#a855f7'  // Violet
-      ];
-      
-      const uptimeDatasets = [];
-      const ttftDatasets = [];
-      
-      Object.keys(diurnalData).forEach(modelId => {
-        const data = diurnalData[modelId];
-        const modelIndex = allModelsSorted.indexOf(modelId);
-        const color = colorPalette[modelIndex % colorPalette.length];
-        const shortName = modelId.split('/').pop();
-        
-        uptimeDatasets.push({
-          label: shortName,
-          data: data.hourlyUptime,
-          borderColor: color,
-          backgroundColor: color + '15',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          tension: 0.3,
-          spanGaps: true,
-          fill: true
-        });
-        
-        ttftDatasets.push({
-          label: shortName,
-          data: data.hourlyTtft,
-          borderColor: color,
-          backgroundColor: color + '15',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          tension: 0.3,
-          spanGaps: true,
-          fill: true
-        });
+      const modelIds = Object.keys(diurnalData);
+      const isComparing = selectedModels.length > 0;
+
+      // Average a per-model field across all shown models, hour by hour (ignoring gaps)
+      const averageSeries = (field) => {
+        const out = [];
+        for (let h = 0; h < 24; h++) {
+          let sum = 0, n = 0;
+          modelIds.forEach(id => {
+            const v = diurnalData[id][field][h];
+            if (v !== null && v !== undefined) { sum += v; n++; }
+          });
+          out.push(n > 0 ? Math.round(sum / n) : null);
+        }
+        return out;
+      };
+
+      // Clean line styling shared by every series (no heavy fills, points only on hover)
+      const lineBase = (color, fill) => ({
+        borderColor: color,
+        backgroundColor: fill || color,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: color,
+        pointBorderColor: color,
+        tension: 0.4,
+        spanGaps: true,
+        fill: fill ? 'origin' : false
       });
+
+      let uptimeDatasets, ttftDatasets;
+      if (isComparing) {
+        // Compare mode: one distinct, clearly-colored line per selected model
+        uptimeDatasets = modelIds.map(id => {
+          const color = SERIES_PALETTE[allModelsSorted.indexOf(id) % SERIES_PALETTE.length];
+          return { label: id.split('/').pop(), data: diurnalData[id].hourlyUptime, ...lineBase(color) };
+        });
+        ttftDatasets = modelIds.map(id => {
+          const color = SERIES_PALETTE[allModelsSorted.indexOf(id) % SERIES_PALETTE.length];
+          return { label: id.split('/').pop(), data: diurnalData[id].hourlyTtft, ...lineBase(color) };
+        });
+      } else {
+        // Default: a single, readable "average across all models" trend with a soft fill
+        uptimeDatasets = [{ label: 'All models · average', data: averageSeries('hourlyUptime'), ...lineBase('#76b900', 'rgba(118, 185, 0, 0.14)'), borderWidth: 3 }];
+        ttftDatasets = [{ label: 'All models · average', data: averageSeries('hourlyTtft'), ...lineBase('#3b82f6', 'rgba(59, 130, 246, 0.14)'), borderWidth: 3 }];
+      }
+
+      const diurnalCaption = document.getElementById('diurnal-caption');
+      if (diurnalCaption) {
+        diurnalCaption.textContent = isComparing
+          ? `Comparing ${modelIds.length} selected model${modelIds.length === 1 ? '' : 's'} — tick more in the table below to add lines.`
+          : 'Showing the average across all models. Tick 2+ models in the table below to compare them here.';
+      }
       
       if (hourlyUptimeChart) hourlyUptimeChart.destroy();
       const ctxUptime = document.getElementById('hourlyUptimeChart').getContext('2d');
@@ -1900,14 +1945,18 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { 
-              display: true, 
+              display: isComparing, 
               position: 'bottom',
               labels: { 
                 color: t.label, 
-                font: { family: 'Inter', size: 10, weight: '500' },
-                padding: 15
+                usePointStyle: true,
+                pointStyle: 'line',
+                boxWidth: 22,
+                font: { family: 'Inter', size: 11, weight: '500' },
+                padding: 16
               }
             },
             tooltip: { 
@@ -1920,6 +1969,7 @@
               bodyFont: { family: 'Inter' },
               callbacks: {
                 label: function(context) {
+                  if (context.raw == null) return null;
                   return ` ${context.dataset.label}: ${context.raw}%`;
                 }
               }
@@ -1952,14 +2002,18 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { 
-              display: true, 
+              display: isComparing, 
               position: 'bottom',
               labels: { 
                 color: t.label, 
-                font: { family: 'Inter', size: 10, weight: '500' },
-                padding: 15
+                usePointStyle: true,
+                pointStyle: 'line',
+                boxWidth: 22,
+                font: { family: 'Inter', size: 11, weight: '500' },
+                padding: 16
               }
             },
             tooltip: { 
@@ -1972,6 +2026,7 @@
               bodyFont: { family: 'Inter' },
               callbacks: {
                 label: function(context) {
+                  if (context.raw == null) return null;
                   return ` ${context.dataset.label}: ${context.raw} ms`;
                 }
               }
