@@ -76,19 +76,18 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    const workflow = event.cron === "53 * * * *" ? "run_quick_test.yml" : "run_benchmark.yml";
     ctx.waitUntil(
-      triggerGitHubAction(env, workflow)
-        .then(() => console.log(`Scheduled benchmark trigger for ${workflow} successful.`))
-        .catch(err => console.error(`Scheduled benchmark trigger for ${workflow} failed:`, err))
+      triggerGitHubAction(env)
+        .then(() => console.log("Hourly benchmark trigger successful."))
+        .catch(err => console.error("Hourly benchmark trigger failed:", err))
     );
   }
 };
 
 // Trigger a workflow_dispatch run on GitHub Actions
-async function triggerGitHubAction(env, workflowName) {
+async function triggerGitHubAction(env) {
   const repo = env.GITHUB_REPO || 'iwastaken93-droid/benchmarktest';
-  const workflow = workflowName || env.GITHUB_WORKFLOW || 'run_benchmark.yml';
+  const workflow = env.GITHUB_WORKFLOW || 'run_benchmark.yml';
   const ref = env.GITHUB_REF || 'master';
   const token = env.GITHUB_TOKEN;
 
