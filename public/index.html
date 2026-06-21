@@ -15,22 +15,68 @@
   
   <style>
     :root {
-      --bg-primary: #080c14;
+      /* Dark theme (default) */
+      --bg-primary: #070b12;
       --bg-secondary: #111726;
-      --bg-glass: rgba(17, 23, 38, 0.65);
-      --bg-glass-hover: rgba(25, 33, 54, 0.8);
+      --bg-glass: rgba(18, 24, 40, 0.7);
+      --bg-glass-hover: rgba(27, 35, 57, 0.85);
+      --bg-elevated: rgba(255, 255, 255, 0.03);
       --border-color: rgba(255, 255, 255, 0.08);
-      --border-color-glow: rgba(118, 185, 0, 0.3);
+      --border-strong: rgba(255, 255, 255, 0.14);
+      --border-color-glow: rgba(118, 185, 0, 0.45);
       --text-primary: #f3f4f6;
       --text-secondary: #9ca3af;
       --text-muted: #6b7280;
       --accent-green: #76b900;
+      --accent-green-soft: #9be000;
       --accent-green-glow: rgba(118, 185, 0, 0.2);
       --success-green: #10b981;
       --warning-yellow: #f59e0b;
       --danger-red: #ef4444;
       --info-blue: #3b82f6;
       --transition-fast: 0.2s ease;
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --card-bg: #1a2236;
+      --header-bg: rgba(8, 12, 20, 0.72);
+      --console-bg: #05080e;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -20px rgba(0, 0, 0, 0.8);
+      --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 44px -22px rgba(118, 185, 0, 0.35);
+      --ambient-1: rgba(118, 185, 0, 0.14);
+      --ambient-2: rgba(59, 130, 246, 0.10);
+      --row-hover: rgba(255, 255, 255, 0.025);
+      --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+    }
+
+    body[data-theme="light"] {
+      /* Light theme */
+      --bg-primary: #eef1f6;
+      --bg-secondary: #ffffff;
+      --bg-glass: rgba(255, 255, 255, 0.82);
+      --bg-glass-hover: rgba(255, 255, 255, 0.97);
+      --bg-elevated: rgba(15, 23, 42, 0.025);
+      --border-color: rgba(15, 23, 42, 0.10);
+      --border-strong: rgba(15, 23, 42, 0.16);
+      --border-color-glow: rgba(118, 185, 0, 0.55);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --accent-green: #5d9400;
+      --accent-green-soft: #4d7c00;
+      --accent-green-glow: rgba(118, 185, 0, 0.14);
+      --success-green: #059669;
+      --warning-yellow: #d97706;
+      --danger-red: #dc2626;
+      --info-blue: #2563eb;
+      --input-bg: rgba(15, 23, 42, 0.04);
+      --card-bg: #ffffff;
+      --header-bg: rgba(255, 255, 255, 0.82);
+      --console-bg: #0c1322;
+      --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 14px 34px -22px rgba(15, 23, 42, 0.28);
+      --shadow-card-hover: 0 1px 3px rgba(15, 23, 42, 0.08), 0 20px 46px -24px rgba(118, 185, 0, 0.45);
+      --ambient-1: rgba(118, 185, 0, 0.18);
+      --ambient-2: rgba(59, 130, 246, 0.12);
+      --row-hover: rgba(15, 23, 42, 0.03);
+      --scrollbar-thumb: rgba(15, 23, 42, 0.18);
     }
 
     * {
@@ -46,11 +92,36 @@
       min-height: 100vh;
       overflow-x: hidden;
       padding-bottom: 60px;
+      position: relative;
+      transition: background-color var(--transition-fast), color var(--transition-fast);
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(900px circle at 12% -5%, var(--ambient-1), transparent 55%),
+        radial-gradient(1000px circle at 100% 0%, var(--ambient-2), transparent 50%);
+    }
+
+    /* Custom scrollbars */
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-track { background: transparent; }
+    *::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
     }
 
     header {
-      background: rgba(8, 12, 20, 0.8);
-      backdrop-filter: blur(12px);
+      background: var(--header-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border-color);
       position: sticky;
       top: 0;
@@ -79,10 +150,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--accent-green-glow);
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid var(--accent-green);
+      background: linear-gradient(135deg, var(--accent-green-glow), transparent);
+      padding: 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color-glow);
+      box-shadow: 0 0 18px -4px var(--accent-green-glow);
     }
 
     .brand-logo h1 {
@@ -99,7 +171,7 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .btn {
@@ -109,8 +181,8 @@
       background-color: var(--bg-secondary);
       border: 1px solid var(--border-color);
       color: var(--text-primary);
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
       font-weight: 500;
       font-size: 0.875rem;
       cursor: pointer;
@@ -119,21 +191,23 @@
     }
 
     .btn:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-color: var(--text-secondary);
+      background-color: var(--bg-glass-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
     }
 
     .btn-primary {
-      background-color: var(--accent-green);
+      background-image: linear-gradient(135deg, var(--accent-green-soft), var(--accent-green));
       border-color: var(--accent-green);
-      color: #000;
-      font-weight: 600;
+      color: #07210a;
+      font-weight: 700;
+      box-shadow: 0 6px 18px -8px var(--accent-green);
     }
 
     .btn-primary:hover:not(:disabled) {
-      background-color: #8cde00;
-      border-color: #8cde00;
-      box-shadow: 0 0 15px rgba(118, 185, 0, 0.4);
+      filter: brightness(1.06);
+      box-shadow: 0 0 20px rgba(118, 185, 0, 0.45);
+      transform: translateY(-1px);
     }
 
     .btn-primary:disabled {
@@ -141,12 +215,34 @@
       cursor: not-allowed;
     }
 
+    /* Theme toggle button */
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--border-color-glow);
+      color: var(--accent-green);
+      transform: translateY(-1px);
+    }
+
     .runner-status-wrapper {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 0.85rem;
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--input-bg);
       padding: 6px 12px;
       border-radius: 20px;
       border: 1px solid var(--border-color);
@@ -204,17 +300,20 @@
     .card {
       background: var(--bg-glass);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 24px;
       position: relative;
       overflow: hidden;
       backdrop-filter: blur(16px);
-      transition: border-color var(--transition-fast), transform var(--transition-fast);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-card);
+      transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
     }
 
     .card:hover {
       border-color: var(--border-color-glow);
-      transform: translateY(-2px);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card-hover);
     }
 
     .card-glow-green::after {
@@ -224,26 +323,43 @@
       left: 0;
       width: 100%;
       height: 3px;
-      background: var(--accent-green);
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-green-soft) 55%, transparent);
+    }
+
+    .summary-grid .card-glow-green {
+      background-image: linear-gradient(180deg, var(--accent-green-glow), transparent 38%);
     }
 
     .card-header-small {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       color: var(--text-secondary);
-      font-size: 0.85rem;
-      font-weight: 500;
-      margin-bottom: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 14px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+    }
+
+    .card-header-small i,
+    .card-header-small svg {
+      width: 30px;
+      height: 30px;
+      padding: 6px;
+      border-radius: 9px;
+      background: var(--accent-green-glow);
+      border: 1px solid var(--border-color-glow);
+      color: var(--accent-green) !important;
     }
 
     .card-value {
       font-family: 'Outfit', sans-serif;
-      font-size: 2rem;
+      font-size: 2.1rem;
       font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 6px;
+      letter-spacing: -0.5px;
     }
 
     .card-subtext {
@@ -281,7 +397,7 @@
 
     /* Sortable Headers and Icons */
     th.sortable:hover {
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--row-hover);
       color: var(--text-primary);
       cursor: pointer;
     }
@@ -301,16 +417,20 @@
 
     .section-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 600;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .section-title i {
+    .section-title i,
+    .section-title svg {
       color: var(--accent-green);
+      width: 20px;
+      height: 20px;
     }
 
     /* Charts */
@@ -352,7 +472,7 @@
     }
 
     tr:hover td {
-      background: rgba(255, 255, 255, 0.015);
+      background: var(--row-hover);
     }
 
     .model-name {
@@ -394,9 +514,9 @@
 
     /* Logs Area */
     .console-logs {
-      background: #05080e;
+      background: var(--console-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 16px;
       font-family: 'Courier New', Courier, monospace;
       font-size: 0.8rem;
@@ -449,15 +569,17 @@
 
     input[type="text"], input[type="password"] {
       flex: 1;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--input-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 10px 14px;
       color: var(--text-primary);
       font-family: inherit;
       font-size: 0.9rem;
       transition: all var(--transition-fast);
     }
+
+    input::placeholder { color: var(--text-muted); }
 
     input[type="text"]:focus, input[type="password"]:focus {
       outline: none;
@@ -534,8 +656,8 @@
       display: inline-flex;
       background-color: var(--input-bg);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 2px;
+      border-radius: 8px;
+      padding: 3px;
     }
 
     .view-toggle-group .toggle-btn {
@@ -558,6 +680,7 @@
       background-color: var(--card-bg);
       color: var(--accent-green) !important;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
     }
   </style>
 </head>
@@ -579,7 +702,11 @@
           <i data-lucide="arrow-left"></i>
           Playground Chat
         </a>
-        
+
+        <button id="btn-theme-toggle" class="theme-toggle" title="Toggle light / dark mode" onclick="toggleTheme()">
+          <i data-lucide="sun" id="theme-toggle-icon"></i>
+        </button>
+
         <div class="runner-status-wrapper">
           <span id="runner-status"><span class="idle-dot"></span> Checking Status...</span>
         </div>
@@ -673,15 +800,16 @@
       </div>
 
       <div id="tab-diurnal" class="tab-content">
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;">
+          <p id="diurnal-caption" style="margin: 0; font-size: 0.82rem; color: var(--text-secondary);">Showing the average across all models. Tick 2+ models in the table below to compare them here.</p>
           <div class="view-toggle-group">
             <button id="btn-diurnal-all" class="toggle-btn active" onclick="setDiurnalRange('all')">All Time</button>
             <button id="btn-diurnal-weekly" class="toggle-btn" onclick="setDiurnalRange('weekly')">Last 7 Days</button>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px;">
-          <div class="chart-wrapper" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
-            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: #f3f4f6; display: flex; align-items: center; gap: 8px;">
+          <div class="chart-wrapper" style="background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
               <i data-lucide="shield-check" style="width: 16px; height: 16px; color: var(--accent-green);"></i>
               Hourly Availability / Uptime (%)
             </h3>
@@ -689,9 +817,9 @@
               <canvas id="hourlyUptimeChart"></canvas>
             </div>
           </div>
-          <div class="chart-wrapper" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px;">
-            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: #f3f4f6; display: flex; align-items: center; gap: 8px;">
-              <i data-lucide="zap" style="width: 16px; height: 16px; color: #3b82f6;"></i>
+          <div class="chart-wrapper" style="background: var(--bg-elevated); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+            <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+              <i data-lucide="zap" style="width: 16px; height: 16px; color: var(--info-blue);"></i>
               Hourly TTFT Latency (ms)
             </h3>
             <div class="chart-container" style="height: 350px;">
@@ -836,6 +964,78 @@
     let currentSortCol = 'tps';
     let currentSortOrder = 'desc';
     let currentDiurnalRange = 'all';
+
+    /* ---------- Theme management (shared with playground via nim_theme) ---------- */
+    function getChartTheme() {
+      const isLight = document.body.getAttribute('data-theme') === 'light';
+      return {
+        grid: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+        tick: isLight ? '#475569' : '#9ca3af',
+        label: isLight ? '#0f172a' : '#f3f4f6',
+        tooltipBg: isLight ? '#ffffff' : '#111726',
+        tooltipTitle: isLight ? '#0f172a' : '#f3f4f6',
+        tooltipBody: isLight ? '#334155' : '#e5e7eb',
+        tooltipBorder: isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)'
+      };
+    }
+
+    function applyTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      try { localStorage.setItem('nim_theme', theme); } catch (e) {}
+      const icon = document.getElementById('theme-toggle-icon');
+      if (icon) {
+        icon.setAttribute('data-lucide', theme === 'light' ? 'moon' : 'sun');
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function toggleTheme() {
+      const current = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      applyTheme(current === 'light' ? 'dark' : 'light');
+      // Re-render charts so the canvas axis/tooltip colors match the new theme
+      if (fullHistory && fullHistory.length > 0) {
+        renderCharts(currentResults);
+      }
+    }
+
+    // Apply the saved theme as early as possible (script runs at end of <body>)
+    (function initTheme() {
+      let saved = 'dark';
+      try { saved = localStorage.getItem('nim_theme') || 'dark'; } catch (e) {}
+      applyTheme(saved);
+    })();
+
+    // Palette shared by the diurnal comparison lines
+    const SERIES_PALETTE = [
+      '#76b900', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b',
+      '#10b981', '#ef4444', '#06b6d4', '#eab308', '#8b5cf6',
+      '#14b8a6', '#f97316'
+    ];
+
+    // Draws the numeric value at the end of each horizontal bar
+    const barValueLabels = {
+      id: 'barValueLabels',
+      afterDatasetsDraw(chart, args, opts) {
+        if (!opts || !opts.enabled) return;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data) return;
+        const ctx = chart.ctx;
+        const data = chart.data.datasets[0].data;
+        ctx.save();
+        ctx.font = "700 11px Inter, sans-serif";
+        ctx.fillStyle = opts.color || '#9ca3af';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        meta.data.forEach((bar, i) => {
+          const val = data[i];
+          if (val === null || val === undefined) return;
+          const text = opts.fmt ? opts.fmt(val) : String(val);
+          ctx.fillText(text, bar.x + 8, bar.y);
+        });
+        ctx.restore();
+      }
+    };
+    Chart.register(barValueLabels);
 
     // Load initial data on startup
     window.addEventListener('DOMContentLoaded', () => {
@@ -1137,7 +1337,19 @@
       })) : 999999;
       const minTTFT = successfulSelected.length > 0 ? Math.min(...successfulSelected.map(r => r.avg_ttft_ms)) : 999999;
       const maxReliability = selectedResults.length > 0 ? Math.max(...selectedResults.map(r => r.success_rate)) : 0;
-      
+
+      // One metric row: label + value (+ winner trophy) above a bar showing this model's value relative to the best
+      const metricRow = (label, valueText, pct, color, isWinner, isLast) => `
+        <div style="${isLast ? '' : 'border-bottom: 1px solid var(--border-color); padding-bottom: 10px;'}">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">${label}</span>
+            <span style="font-size: 0.95rem; font-weight: 700; color: ${isWinner ? color : 'var(--text-primary)'};">${valueText}${isWinner ? ' 🏆' : ''}</span>
+          </div>
+          <div style="height: 6px; background: var(--bg-glass); border-radius: 4px; overflow: hidden;">
+            <div style="height: 100%; width: ${Math.max(0, Math.min(100, pct)).toFixed(0)}%; background: ${color}; opacity: ${isWinner ? 1 : 0.5}; border-radius: 4px; transition: width var(--transition-fast);"></div>
+          </div>
+        </div>`;
+
       selectedResults.forEach(r => {
         const isOffline = r.success_rate === 0;
         let tpot = r.avg_tpot_ms;
@@ -1152,7 +1364,7 @@
         
         const card = document.createElement('div');
         card.className = 'card';
-        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.background = 'var(--bg-elevated)';
         card.style.borderColor = isTPSWinner ? 'var(--accent-green)' : 'var(--border-color)';
         card.style.position = 'relative';
         card.style.padding = '20px';
@@ -1165,41 +1377,20 @@
           `;
         }
         
+        const tpsPct = maxTPS > 0 ? (r.avg_tps / maxTPS) * 100 : 0;
+        const tpotPct = (tpot > 0 && minTPOT < 999999) ? (minTPOT / tpot) * 100 : 0;
+        const ttftPct = (r.avg_ttft_ms > 0 && minTTFT < 999999) ? (minTTFT / r.avg_ttft_ms) * 100 : 0;
+        const relPct = r.success_rate * 100;
+        const relColor = r.success_rate === 1.0 ? 'var(--success-green)' : (r.success_rate > 0 ? 'var(--warning-yellow)' : 'var(--danger-red)');
+
         card.innerHTML += `
           <h3 style="font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 16px; padding-right: 80px; word-break: break-all; color: ${isOffline ? 'var(--text-muted)' : 'var(--text-primary)'};">${r.model}</h3>
           
           <div style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 8px;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Throughput</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${isTPSWinner ? 'var(--accent-green)' : 'var(--text-primary)'};">
-                ${r.avg_tps > 0 ? `${r.avg_tps.toFixed(1)} tok/s` : 'Offline'}
-                ${isTPSWinner ? ' 🏆' : ''}
-              </span>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 8px;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Time Per Token</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${isTPOTWinner ? 'var(--success-green)' : 'var(--text-primary)'};">
-                ${tpot > 0 ? `${tpot.toFixed(1)} ms/t` : 'Offline'}
-                ${isTPOTWinner ? ' 🏆' : ''}
-              </span>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 8px;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">First Token Latency</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${isTTFTWinner ? 'var(--info-blue)' : 'var(--text-primary)'};">
-                ${r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'Offline'}
-                ${isTTFTWinner ? ' 🏆' : ''}
-              </span>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.8rem; color: var(--text-secondary);">Reliability</span>
-              <span style="font-size: 0.95rem; font-weight: 700; color: ${r.success_rate === 1.0 ? 'var(--success-green)' : (r.success_rate > 0 ? 'var(--warning-yellow)' : 'var(--danger-red)')};">
-                ${(r.success_rate * 100).toFixed(0)}%
-                ${isReliabilityWinner && r.success_rate > 0 ? ' 🏆' : ''}
-              </span>
-            </div>
+            ${metricRow('Throughput', r.avg_tps > 0 ? `${r.avg_tps.toFixed(1)} tok/s` : 'Offline', tpsPct, 'var(--accent-green)', isTPSWinner, false)}
+            ${metricRow('Time Per Token', tpot > 0 ? `${tpot.toFixed(1)} ms/t` : 'Offline', tpotPct, 'var(--success-green)', isTPOTWinner, false)}
+            ${metricRow('First Token Latency', r.avg_ttft_ms > 0 ? `${r.avg_ttft_ms.toFixed(0)} ms` : 'Offline', ttftPct, 'var(--info-blue)', isTTFTWinner, false)}
+            ${metricRow('Reliability', `${(r.success_rate * 100).toFixed(0)}%`, relPct, relColor, isReliabilityWinner && r.success_rate > 0, true)}
           </div>
         `;
         container.appendChild(card);
@@ -1327,7 +1518,7 @@
           tdToggle.setAttribute('colspan', '6');
           tdToggle.style.textAlign = 'center';
           tdToggle.style.padding = '12px 0';
-          tdToggle.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+          tdToggle.style.backgroundColor = 'var(--bg-elevated)';
           
           tdToggle.innerHTML = `
               <button class="btn btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; gap: 6px; display: inline-flex; align-items: center; border: 1px solid var(--border-color); cursor: pointer;" onclick="toggleFailedModels()">
@@ -1344,6 +1535,7 @@
     }
 
     function renderCharts(results) {
+      const t = getChartTheme();
       // 1. Filter out models that don't work (success_rate === 0)
       let activeResults = results.filter(r => r.success_rate > 0);
       
@@ -1364,6 +1556,14 @@
       });
       const ttftData = sortedResults.map(r => r.avg_ttft_ms > 0 ? r.avg_ttft_ms : 0);
       const reliabilityData = sortedResults.map(r => r.success_rate * 100);
+
+      // Give each horizontal bar room to breathe (avoids the cramped look with many models)
+      const barCount = sortedResults.length;
+      const barChartHeight = Math.max(300, Math.min(barCount * 26 + 90, 820));
+      ['speedChart', 'tpotChart', 'ttftChart', 'reliabilityChart'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.parentElement) el.parentElement.style.height = barChartHeight + 'px';
+      });
 
       // 1. Throughput Chart (TPS)
       if (speedChart) speedChart.destroy();
@@ -1390,19 +1590,21 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 56 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: '#111726' }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v.toFixed(0) }
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af' },
-              title: { display: true, text: 'Tokens / Second (Higher is Better)', color: '#9ca3af' }
+              grid: { color: t.grid },
+              ticks: { color: t.tick },
+              title: { display: true, text: 'Tokens / Second (Higher is Better)', color: t.tick }
             },
             y: {
               grid: { display: false },
-              ticks: { color: '#f3f4f6', font: { weight: '600' } }
+              ticks: { color: t.label, font: { weight: '600' } }
             }
           }
         }
@@ -1433,19 +1635,21 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 56 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: '#111726' }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v.toFixed(1) }
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af' },
-              title: { display: true, text: 'Milliseconds / Token (Lower is Better)', color: '#9ca3af' }
+              grid: { color: t.grid },
+              ticks: { color: t.tick },
+              title: { display: true, text: 'Milliseconds / Token (Lower is Better)', color: t.tick }
             },
             y: {
               grid: { display: false },
-              ticks: { color: '#f3f4f6', font: { weight: '600' } }
+              ticks: { color: t.label, font: { weight: '600' } }
             }
           }
         }
@@ -1476,19 +1680,21 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 64 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: '#111726' }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v >= 10000 ? (v / 1000).toFixed(1) + 's' : v.toFixed(0) }
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af' },
-              title: { display: true, text: 'Milliseconds (Lower is Better)', color: '#9ca3af' }
+              grid: { color: t.grid },
+              ticks: { color: t.tick },
+              title: { display: true, text: 'Milliseconds (Lower is Better)', color: t.tick }
             },
             y: {
               grid: { display: false },
-              ticks: { color: '#f3f4f6', font: { weight: '600' } }
+              ticks: { color: t.label, font: { weight: '600' } }
             }
           }
         }
@@ -1531,17 +1737,19 @@
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          layout: { padding: { right: 44 } },
           plugins: {
             legend: { display: false },
-            tooltip: { backgroundColor: '#111726' }
+            tooltip: { backgroundColor: t.tooltipBg, titleColor: t.tooltipTitle, bodyColor: t.tooltipBody, borderColor: t.tooltipBorder, borderWidth: 1 },
+            barValueLabels: { enabled: true, color: t.tick, fmt: v => v.toFixed(0) + '%' }
           },
           scales: {
             x: {
               min: 0,
               max: 100,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af', callback: value => value + '%' },
-              title: { display: true, text: 'Success Rate (%)', color: '#9ca3af' }
+              grid: { color: t.grid },
+              ticks: { color: t.tick, callback: value => value + '%' },
+              title: { display: true, text: 'Success Rate (%)', color: t.tick }
             },
             y: {
               grid: { display: false }
@@ -1648,6 +1856,7 @@
 
     function renderHourlyCharts() {
       if (!fullHistory || fullHistory.length === 0) return;
+      const t = getChartTheme();
       
       let historyToUse = fullHistory;
       if (currentDiurnalRange === 'weekly') {
@@ -1670,55 +1879,60 @@
       });
       
       const allModelsSorted = Object.keys(calculateHourlyDiurnalData(fullHistory, [])).sort();
-      
-      const colorPalette = [
-        '#76b900', // NVIDIA Green
-        '#3b82f6', // Blue
-        '#8b5cf6', // Purple
-        '#ec4899', // Pink
-        '#f59e0b', // Amber/Orange
-        '#10b981', // Emerald/Green
-        '#ef4444', // Red
-        '#06b6d4', // Cyan
-        '#84cc16', // Lime
-        '#a855f7'  // Violet
-      ];
-      
-      const uptimeDatasets = [];
-      const ttftDatasets = [];
-      
-      Object.keys(diurnalData).forEach(modelId => {
-        const data = diurnalData[modelId];
-        const modelIndex = allModelsSorted.indexOf(modelId);
-        const color = colorPalette[modelIndex % colorPalette.length];
-        const shortName = modelId.split('/').pop();
-        
-        uptimeDatasets.push({
-          label: shortName,
-          data: data.hourlyUptime,
-          borderColor: color,
-          backgroundColor: color + '15',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          tension: 0.3,
-          spanGaps: true,
-          fill: true
-        });
-        
-        ttftDatasets.push({
-          label: shortName,
-          data: data.hourlyTtft,
-          borderColor: color,
-          backgroundColor: color + '15',
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          tension: 0.3,
-          spanGaps: true,
-          fill: true
-        });
+      const modelIds = Object.keys(diurnalData);
+      const isComparing = selectedModels.length > 0;
+
+      // Average a per-model field across all shown models, hour by hour (ignoring gaps)
+      const averageSeries = (field) => {
+        const out = [];
+        for (let h = 0; h < 24; h++) {
+          let sum = 0, n = 0;
+          modelIds.forEach(id => {
+            const v = diurnalData[id][field][h];
+            if (v !== null && v !== undefined) { sum += v; n++; }
+          });
+          out.push(n > 0 ? Math.round(sum / n) : null);
+        }
+        return out;
+      };
+
+      // Clean line styling shared by every series (no heavy fills, points only on hover)
+      const lineBase = (color, fill) => ({
+        borderColor: color,
+        backgroundColor: fill || color,
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: color,
+        pointBorderColor: color,
+        tension: 0.4,
+        spanGaps: true,
+        fill: fill ? 'origin' : false
       });
+
+      let uptimeDatasets, ttftDatasets;
+      if (isComparing) {
+        // Compare mode: one distinct, clearly-colored line per selected model
+        uptimeDatasets = modelIds.map(id => {
+          const color = SERIES_PALETTE[allModelsSorted.indexOf(id) % SERIES_PALETTE.length];
+          return { label: id.split('/').pop(), data: diurnalData[id].hourlyUptime, ...lineBase(color) };
+        });
+        ttftDatasets = modelIds.map(id => {
+          const color = SERIES_PALETTE[allModelsSorted.indexOf(id) % SERIES_PALETTE.length];
+          return { label: id.split('/').pop(), data: diurnalData[id].hourlyTtft, ...lineBase(color) };
+        });
+      } else {
+        // Default: a single, readable "average across all models" trend with a soft fill
+        uptimeDatasets = [{ label: 'All models · average', data: averageSeries('hourlyUptime'), ...lineBase('#76b900', 'rgba(118, 185, 0, 0.14)'), borderWidth: 3 }];
+        ttftDatasets = [{ label: 'All models · average', data: averageSeries('hourlyTtft'), ...lineBase('#3b82f6', 'rgba(59, 130, 246, 0.14)'), borderWidth: 3 }];
+      }
+
+      const diurnalCaption = document.getElementById('diurnal-caption');
+      if (diurnalCaption) {
+        diurnalCaption.textContent = isComparing
+          ? `Comparing ${modelIds.length} selected model${modelIds.length === 1 ? '' : 's'} — tick more in the table below to add lines.`
+          : 'Showing the average across all models. Tick 2+ models in the table below to compare them here.';
+      }
       
       if (hourlyUptimeChart) hourlyUptimeChart.destroy();
       const ctxUptime = document.getElementById('hourlyUptimeChart').getContext('2d');
@@ -1731,22 +1945,31 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { 
-              display: true, 
+              display: isComparing, 
               position: 'bottom',
               labels: { 
-                color: '#f3f4f6', 
-                font: { family: 'Inter', size: 10, weight: '500' },
-                padding: 15
+                color: t.label, 
+                usePointStyle: true,
+                pointStyle: 'line',
+                boxWidth: 22,
+                font: { family: 'Inter', size: 11, weight: '500' },
+                padding: 16
               }
             },
             tooltip: { 
-              backgroundColor: '#111726',
+              backgroundColor: t.tooltipBg,
+              titleColor: t.tooltipTitle,
+              bodyColor: t.tooltipBody,
+              borderColor: t.tooltipBorder,
+              borderWidth: 1,
               titleFont: { family: 'Inter', weight: '600' },
               bodyFont: { family: 'Inter' },
               callbacks: {
                 label: function(context) {
+                  if (context.raw == null) return null;
                   return ` ${context.dataset.label}: ${context.raw}%`;
                 }
               }
@@ -1754,15 +1977,15 @@
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af', font: { size: 10 } }
+              grid: { color: t.grid },
+              ticks: { color: t.tick, font: { size: 10 } }
             },
             y: {
               min: 0,
               max: 100,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af', callback: value => value + '%' },
-              title: { display: true, text: 'Availability Rate (%)', color: '#9ca3af', font: { family: 'Inter', size: 11 } }
+              grid: { color: t.grid },
+              ticks: { color: t.tick, callback: value => value + '%' },
+              title: { display: true, text: 'Availability Rate (%)', color: t.tick, font: { family: 'Inter', size: 11 } }
             }
           }
         }
@@ -1779,22 +2002,31 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { 
-              display: true, 
+              display: isComparing, 
               position: 'bottom',
               labels: { 
-                color: '#f3f4f6', 
-                font: { family: 'Inter', size: 10, weight: '500' },
-                padding: 15
+                color: t.label, 
+                usePointStyle: true,
+                pointStyle: 'line',
+                boxWidth: 22,
+                font: { family: 'Inter', size: 11, weight: '500' },
+                padding: 16
               }
             },
             tooltip: { 
-              backgroundColor: '#111726',
+              backgroundColor: t.tooltipBg,
+              titleColor: t.tooltipTitle,
+              bodyColor: t.tooltipBody,
+              borderColor: t.tooltipBorder,
+              borderWidth: 1,
               titleFont: { family: 'Inter', weight: '600' },
               bodyFont: { family: 'Inter' },
               callbacks: {
                 label: function(context) {
+                  if (context.raw == null) return null;
                   return ` ${context.dataset.label}: ${context.raw} ms`;
                 }
               }
@@ -1802,14 +2034,14 @@
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af', font: { size: 10 } }
+              grid: { color: t.grid },
+              ticks: { color: t.tick, font: { size: 10 } }
             },
             y: {
               min: 0,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#9ca3af', callback: value => value + ' ms' },
-              title: { display: true, text: 'Latency (ms) (Lower is Better)', color: '#9ca3af', font: { family: 'Inter', size: 11 } }
+              grid: { color: t.grid },
+              ticks: { color: t.tick, callback: value => value + ' ms' },
+              title: { display: true, text: 'Latency (ms) (Lower is Better)', color: t.tick, font: { family: 'Inter', size: 11 } }
             }
           }
         }
