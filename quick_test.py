@@ -41,7 +41,7 @@ def test_model(model_id, api_key):
     ttft = None
     generated_text = ""
     error_occurred = None
-    
+    total_time = 0.0
     try:
         with urllib.request.urlopen(req, timeout=120) as response:
             first_chunk = True
